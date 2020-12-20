@@ -2,17 +2,6 @@ from collections import OrderedDict
 import random
 
 
-def init():
-	# default params, #1 so far
-	algo_params = OrderedDict()
-	algo_params['cci_up'] 		=  241.13982757351428
-	algo_params['cci_down'] 	= -214.73172261066048
-	algo_params['target'] 		=   1.181251961302452  # target stop for dax to move +x %
-	algo_params['hard'] 		=  -0.1697423870617957  # hard stop-loss if entry dax comes down x %
-	algo_params['trailing'] 	=  -0.4961019880632199 # trailing stop-loss if in active position dax comes down x % from current top
-	algo_params['cci_window'] 	=  28
-	return algo_params
-
 def set_new_params(p, index):
 	bp = get_backtest_params()
 	p['cci_up'] 	= bp[index][0]
@@ -35,19 +24,34 @@ def randomize_params(p):
 
 	print("randomized")
 
+def init():
+	# default params, #1 so far
+	algo_params = OrderedDict()
+	algo_params['cci_up'] 		=  249
+	algo_params['cci_down'] 	= -216
+	algo_params['target'] 		=   0.99  # target stop for dax to move +x %
+	algo_params['hard'] 		=  -0.43  # hard stop-loss if entry dax comes down x %
+	algo_params['trailing'] 	=  -0.38  # trailing stop-loss if in active position dax comes down x % from current top
+	algo_params['cci_window'] 	=  28
+	return algo_params
+
+
+
 def get_backtest_params():
 	# cci_up		cci_down		target			hard		trailing 	cci_windows
 	backtest_params = (
-
-	(150,			-300,			0.3584086017,		-0.332201008,	-0.4917583083,	40),	# +14e, statisticically from 2d, only 1 closed deal
-	#(262.6280835539,	-135.7762585974,	0.3584086017,		-0.332201008,	-0.4917583083,	446),	# +14e, statisticically from 2d, only 1 closed deal
-	(182,			-148,			0.492436,		-0.155745,	-0.173158,	346), 	# -17e  1d
+	(249.50256140567475,	-216.03885069653387,	0.9919496922293249,	-0.4330237918474565, -0.3886362997089748, 28),	# +52e 2d wow
+#	(150,			-300,			0.3584086017,		-0.332201008,	-0.4917583083,	40),	# +14e, statisticically from 2d, only 1 closed deal
+#	(262.6280835539,	-135.7762585974,	0.3584086017,		-0.332201008,	-0.4917583083,	446),	# +14e, statisticically from 2d, only 1 closed deal
+#	(182,			-148,			0.492436,		-0.155745,	-0.173158,	346), 	# -17e  1d
 	)
 
-	#('total',  46.0, OrderedDict([('cci_up', 241.13982757351428), ('cci_down', -214.73172261066048), ('target', 1.181251961302452),  ('hard', -0.1697423870617957), ('trailing', -0.4961019880632199), ('cci_window', 28)])) 2d wow! must be over-fitted
-	#('total',  26.0, OrderedDict([('cci_up', 307.07888393376334), ('cci_down', -422.44291512542344), ('target', 0.5815241062161417), ('hard', -1.034611870674152), ('trailing', -0.10346339274809371), ('cci_window', 356)]))
-	#('total',  10.0, OrderedDict([('cci_up', 243.9818033384035),  ('cci_down', -404.5615585477548),  ('target', 0.6718226869273493), ('hard', -0.8412898130110619), ('trailing', -1.0513628987412271), ('cci_window', 50)]))
-	#('total',  46.0, OrderedDict([('cci_up', 224.1187499291742),  ('cci_down', -355.1983499213747),  ('target', 0.3124042963465917), ('hard', -0.9969613503655007), ('trailing', -0.9123952048101441), ('cci_window', 506)])) ?
+#('total', 52.0, OrderedDict([('cci_up', 249.50256140567475), ('cci_down', -216.03885069653387), ('target', 0.9919496922293249), ('hard', -0.4330237918474565), ('trailing', -0.3886362997089748), ('cci_window', 28)])) 2d wow
+#('total', 46.0, OrderedDict([('cci_up', 241.13982757351428), ('cci_down', -214.73172261066048), ('target', 1.181251961302452),  ('hard', -0.1697423870617957), ('trailing', -0.4961019880632199), ('cci_window', 28)])) 2d wow!
+#('total', 42.0, OrderedDict([('cci_up', 234.73374002476442), ('cci_down', -215.77209446238564), ('target', 1.186686667883335),  ('hard', -0.3305816786246104), ('trailing', -0.4280666875898905), ('cci_window', 28)]))
+#('total', 26.0, OrderedDict([('cci_up', 307.07888393376334), ('cci_down', -422.44291512542344), ('target', 0.5815241062161417), ('hard', -1.034611870674152), ('trailing', -0.10346339274809371), ('cci_window', 356)]))
+#('total', 10.0, OrderedDict([('cci_up', 243.9818033384035),  ('cci_down', -404.5615585477548),  ('target', 0.6718226869273493), ('hard', -0.8412898130110619), ('trailing', -1.0513628987412271), ('cci_window', 50)]))
+#('total', 46.0, OrderedDict([('cci_up', 224.1187499291742),  ('cci_down', -355.1983499213747),  ('target', 0.3124042963465917), ('hard', -0.9969613503655007), ('trailing', -0.9123952048101441), ('cci_window', 506)])) ?
 
 	return backtest_params
 
