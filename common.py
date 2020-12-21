@@ -12,8 +12,6 @@ FIXED_STOCK_AMOUNT = True # True -> use BUY_STOCKS, False -> use MONEY_PER_TRANS
 BUY_STOCKS = 100
 MONEY_PER_TRANSACTION = 1000
 
-PRINT_ACTIONS = True
-
 def count_stats(final, stocks, last_total, best_total, closed_deals, algo_params):
 	unclosed_deals = 0
 	pending_money  = 0
@@ -78,7 +76,7 @@ def execute_buy_order_online(stock):
 def execute_sell_order_online(stock):
 	print("Execute sell order", stock['name'])
 
-def do_transaction(stock, flip, reason, money, last_total, closed_deals, algo_params, index):
+def do_transaction(stock, flip, reason, money, last_total, closed_deals, algo_params, index, info):
 	buy  = float(stock['buy_series'][-1:])
 	sell = float(stock['sell_series'][-1:])
 
@@ -96,7 +94,7 @@ def do_transaction(stock, flip, reason, money, last_total, closed_deals, algo_pa
 		else:
 			stock['stocks'] = int(MONEY_PER_TRANSACTION / sell)
 		
-		if(PRINT_ACTIONS):
+		if(info):
 			print("ACTION: BUY ", stock['name'], stock['stocks'], stock['last_buy'])
 		#execute_buy_order_online(stock)
 
@@ -108,7 +106,7 @@ def do_transaction(stock, flip, reason, money, last_total, closed_deals, algo_pa
 		stock['current_top'] = 0
 		stock['active_position'] = False
 		stock['signals_list_sell'].append((index, float(stock['buy_series'][-1:])))
-		if(PRINT_ACTIONS):
+		if(info):
 			print("ACTION: SELL", stock['name'], stock['stocks'], buy, reason, "result", round(float(closed_deals[-1]), 2) , "total", round(last_total, 2))
 		#execute_sell_order_online(stock)
 		stock['stocks'] = 0
@@ -206,10 +204,13 @@ def logout(stock):
 	stock['browser'].close()
 
 def check_args(arglist):
-	do_graph = False
+	do_graph   = False
+	do_actions = False
 
 	for i in arglist:
 		if(i == "graph"):
 			do_graph = True
+		if(i == "actions"):
+			do_actions = True
 
-	return do_graph
+	return do_graph, do_actions

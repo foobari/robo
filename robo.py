@@ -58,9 +58,7 @@ def init_stocks():
 ###################################################################################################
 #					prog start						  #
 ###################################################################################################
-
-PRINT_GRAPH   = False
-GRAPH_UPDATE  = 1
+graph_update_interval = 1
 
 file_index = 0
 best_total = 0
@@ -70,9 +68,9 @@ algo_params = algo.init()
 with open('credentials.json', 'r') as f:
 	creds = json.load(f)
 
-PRINT_GRAPH = common.check_args(sys.argv)
+do_graph, do_actions = common.check_args(sys.argv)
 
-if(PRINT_GRAPH):
+if(do_graph):
 	graph.init()
 
 while(True):
@@ -117,10 +115,11 @@ while(True):
 									  last_total,
 									  closed_deals,
 									  algo_params,
-									  index)
+									  index,
+									  do_actions)
 
 		# graph
-		if(PRINT_GRAPH and (index % GRAPH_UPDATE == 0)):
+		if(do_graph and (index % graph_update_interval == 0)):
 			graph.draw(stocks, money_series)
 
 		# re-login after ~every hour

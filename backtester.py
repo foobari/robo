@@ -84,11 +84,10 @@ def init_stocks():
 #					prog start						  #
 ###################################################################################################
 RANDOMIZE  = False
-SET_PARAMS = False   	# True -> usebacktest_params[], False -> defaults/random
-ONE_SHOT   = True	# True -> run through input file(s) only once
+SET_PARAMS = True   	# True -> usebacktest_params[], False -> defaults/random
+ONE_SHOT   = False	# True -> run through input file(s) only once
 
-PRINT_GRAPH   = False
-GRAPH_UPDATE  = 20
+graph_update_interval = 20
 
 filenames = []
 file_index = 0
@@ -100,7 +99,7 @@ param_set_len = len(backtest_params)
 
 algo_params = algo.init()
 
-PRINT_GRAPH = common.check_args(sys.argv)
+do_graph, do_actions = common.check_args(sys.argv)
 
 if(SET_PARAMS):
 	algo.set_new_params(algo_params, 0)
@@ -109,7 +108,7 @@ if(SET_PARAMS):
 if(RANDOMIZE):
 	algo.randomize_params(algo_params)
 
-if(PRINT_GRAPH):
+if(do_graph):
 	graph.init()
 
 # get all files in dir
@@ -166,10 +165,11 @@ while(True):
 									  last_total,
 									  closed_deals,
 									  algo_params,
-									  index)
+									  index,
+									  do_actions)
 
 		# graph
-		if(PRINT_GRAPH and (index % GRAPH_UPDATE == 0)):
+		if(do_graph and (index % graph_update_interval == 0)):
 			graph.draw(stocks, money_series)
 
 		index = index + 1
