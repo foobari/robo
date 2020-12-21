@@ -12,11 +12,14 @@ FIXED_STOCK_AMOUNT = True # True -> use BUY_STOCKS, False -> use MONEY_PER_TRANS
 BUY_STOCKS = 100
 MONEY_PER_TRANSACTION = 1000
 
-PRINT_ACTIONS = False
+PRINT_ACTIONS = True
 
 def count_stats(final, stocks, last_total, best_total, closed_deals, algo_params):
 	unclosed_deals = 0
 	pending_money  = 0
+	losses_sum     = 0
+	sharpe         = 0
+	profitability  = 0
 
 	for stock in stocks:
 		if(stock['active_position']):
@@ -24,27 +27,27 @@ def count_stats(final, stocks, last_total, best_total, closed_deals, algo_params
 			closing_sell = ((float(stock['buy_series'][-1:]) - stock['last_buy']) * stock['stocks'])
 			closed_deals.append(closing_sell)
 			last_total = last_total + closing_sell
-			
-	if(np.std(closed_deals) != 0):
-		sharpe = math.sqrt(len(closed_deals)) * np.mean(closed_deals) / np.std(closed_deals)
-	else:
-		sharpe = 0
-	
-	profits = [i for i in closed_deals if i >= 0]
-	losses  = [i for i in closed_deals if i < 0]
-	profit_sum = (sum(profits))
-	losses_sum = -(sum(losses))
-	profitability = 0
-	
+
+	if(len(closed_deals) > 0):
+		if(np.std(closed_deals) != 0):
+			sharpe = math.sqrt(len(closed_deals)) * np.mean(closed_deals) / np.std(closed_deals)
+		else:
+			sharpe = 0
+
+		profits = [i for i in closed_deals if i >= 0]
+		losses  = [i for i in closed_deals if i < 0]
+		profit_sum = (sum(profits))
+		losses_sum = -(sum(losses))
+		profitability = 0
+
 	if(len(closed_deals) > 0):
 		profitability = float(len(profits) / float(len(closed_deals)))
 	if(losses_sum > 0):
 		profit_factor = profit_sum/losses_sum
 	else:
 		profit_factor = 100
-	
+
 	best_total = best_total + last_total
-	
 
 	print("profit", round(last_total, 2), "algo closed", len(closed_deals) - unclosed_deals, "force closed", unclosed_deals, "metrics", round(sharpe, 2), round(profitability, 2), round(profit_factor, 2))
 
@@ -201,3 +204,12 @@ def login(stock, creds):
 
 def logout(stock):
 	stock['browser'].close()
+
+def check_args(arglist):
+	do_graph = False
+
+	for i in arglist:
+		if(i == "graph"):
+			do_graph = True
+
+	return do_graph

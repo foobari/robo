@@ -85,11 +85,12 @@ def init_stocks():
 ###################################################################################################
 RANDOMIZE  = False
 SET_PARAMS = False   	# True -> usebacktest_params[], False -> defaults/random
-ONE_SHOT   = False	# True -> run through input file(s) only once
+ONE_SHOT   = True	# True -> run through input file(s) only once
 
 PRINT_GRAPH   = False
-GRAPH_UPDATE  = 40
+GRAPH_UPDATE  = 20
 
+filenames = []
 file_index = 0
 best_total = 0
 
@@ -98,6 +99,8 @@ backtest_params = algo.get_backtest_params()
 param_set_len = len(backtest_params)
 
 algo_params = algo.init()
+
+PRINT_GRAPH = common.check_args(sys.argv)
 
 if(SET_PARAMS):
 	algo.set_new_params(algo_params, 0)
@@ -110,11 +113,10 @@ if(PRINT_GRAPH):
 	graph.init()
 
 # get all files in dir
-filenames = get_backtest_files('/home/foobari/src/robo/backtest/')
+#filenames = get_backtest_files('/home/foobari/src/robogit/robo/backtest/')
 
 # only one file
-#filenames.append('/home/foobari/src/robo/backtest/data_18122020_x15.dat')
-
+filenames.append('/home/foobari/src/robogit/robo/backtest/data_21122020_x15.dat')
 
 while(True):
 	stocks = init_stocks()

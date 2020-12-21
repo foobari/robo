@@ -22,7 +22,6 @@ import algo
 import graph
 import common
 
-PLOT_LAST_N = 300
 WAIT_FETCHING_SECS = 10
 	
 
@@ -60,7 +59,7 @@ def init_stocks():
 #					prog start						  #
 ###################################################################################################
 
-PRINT_GRAPH   = True
+PRINT_GRAPH   = False
 GRAPH_UPDATE  = 1
 
 file_index = 0
@@ -70,6 +69,8 @@ algo_params = algo.init()
 
 with open('credentials.json', 'r') as f:
 	creds = json.load(f)
+
+PRINT_GRAPH = common.check_args(sys.argv)
 
 if(PRINT_GRAPH):
 	graph.init()
@@ -122,11 +123,11 @@ while(True):
 		if(PRINT_GRAPH and (index % GRAPH_UPDATE == 0)):
 			graph.draw(stocks, money_series)
 
-		# re-login after every hour
-		if(((index+1) % 360) == 0):
+		# re-login after ~every hour
+		if(((index+1) % 300) == 0):
 			for stock in stocks:
-				logout(stock)
-				login(stock, creds)
+				common.logout(stock)
+				common.login(stock, creds)
 
 		time.sleep(WAIT_FETCHING_SECS)		
 		index = index + 1
