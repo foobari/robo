@@ -5,5 +5,5 @@
 	"graph_update_interval": 20,
 	"randomize": false,
 	"set_params": false,
-	"one_shot": false
+	"one_shot": true
 }

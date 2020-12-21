@@ -21,6 +21,7 @@ from selenium.webdriver.support.ui import Select
 import algo
 import graph
 import common
+import settings
 
 def init_stocks():
 	global ax1, ax2
@@ -125,7 +126,7 @@ while(True):
 				common.logout(stock)
 				common.login(stock, creds)
 
-		time.sleep(WAIT_FETCHING_SECS)		
+		time.sleep(s['wait_fetching_secs'])
 		index = index + 1
 
 	best_total = common.count_stats(True, stocks, last_total, best_total, closed_deals, a)
