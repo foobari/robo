@@ -1,0 +1,9 @@
+{
+	"use_fixed_stock_amount": true,
+	"stock_amount_to_buy": 100,
+	"money_per_transaction": 100,
+	"graph_update_interval": 20,
+	"randomize": false,
+	"set_params": false,
+	"one_shot": false
+}

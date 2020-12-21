@@ -14,11 +14,7 @@ import pdb
 import algo
 import graph
 import common
-
-
-FIXED_STOCK_AMOUNT = True # True -> use BUY_STOCKS, False -> use MONEY_PER_TRANSACTION
-BUY_STOCKS = 100
-MONEY_PER_TRANSACTION = 1000
+import settings
 
 
 def get_backtest_files(folder_path):
@@ -83,12 +79,6 @@ def init_stocks():
 ###################################################################################################
 #					prog start						  #
 ###################################################################################################
-RANDOMIZE  = False
-SET_PARAMS = True   	# True -> usebacktest_params[], False -> defaults/random
-ONE_SHOT   = False	# True -> run through input file(s) only once
-
-graph_update_interval = 20
-
 filenames = []
 file_index = 0
 best_total = 0
@@ -97,16 +87,17 @@ param_set_index = 0
 backtest_params = algo.get_backtest_params()
 param_set_len = len(backtest_params)
 
-algo_params = algo.init()
+a = algo.init()
+s = settings.init('settings_backtester.json')
 
 do_graph, do_actions = common.check_args(sys.argv)
 
-if(SET_PARAMS):
-	algo.set_new_params(algo_params, 0)
+if(s['set_params']):
+	a.set_new_params(a, 0)
 	param_set_index = param_set_index + 1
 
-if(RANDOMIZE):
-	algo.randomize_params(algo_params)
+if(s['randomize']):
+	a.randomize_params(a)
 
 if(do_graph):
 	graph.init()
@@ -129,15 +120,15 @@ while(True):
 		backtest_data, entries = get_backtest_data(filenames[file_index])
 		file_index = file_index + 1
 	else:
-		if(ONE_SHOT):
+		if(s['one_shot']):
 			quit()
 		
-		if(RANDOMIZE):
-			algo.randomize_params(algo_params)
+		if(s['randomize']):
+			a.randomize_params(a)
 		
-		if(SET_PARAMS):
+		if(s['set_params']):
 			if(param_set_index < param_set_len):
-				algo.set_new_params(algo_params, param_set_index)
+				a.set_new_params(a, param_set_index)
 				param_set_index = param_set_index + 1
 			else:
 				quit()
@@ -155,7 +146,7 @@ while(True):
 
 		# check signals, do transactions
 		for stock in stocks:
-			flip, reason = algo.check_signals(stock, index, algo_params)
+			flip, reason = algo.check_signals(stock, index, a)
 
 			if(flip != 0):
 				money, last_total = common.do_transaction(stock,
@@ -164,20 +155,20 @@ while(True):
 									  money,
 									  last_total,
 									  closed_deals,
-									  algo_params,
+									  a,
 									  index,
 									  do_actions)
 
 		# graph
-		if(do_graph and (index % graph_update_interval == 0)):
+		if(do_graph and (index % s['graph_update_interval'] == 0)):
 			graph.draw(stocks, money_series)
 
 		index = index + 1
 
 	last_run = file_index == len(filenames)
-	best_total = common.count_stats(last_run, stocks, last_total, best_total, closed_deals, algo_params)
+	best_total = common.count_stats(last_run, stocks, last_total, best_total, closed_deals, a)
 
-	if(last_run and ONE_SHOT):
+	if(last_run and s['one_shot']):
 		print("Pausing...")
 		while True:
 			time.sleep(1)

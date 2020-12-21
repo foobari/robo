@@ -85,7 +85,7 @@ def check_signals(stock, index, algo_params):
 		p_std = stock['cci_ptyp'].rolling(algo_params['cci_window'], min_periods=0).std()
 		if(float(p_std[-1:]) != 0):
 			stock['cci_last'] = (p_typ - float(p_sma[-1:])) / float(p_std[-1:]) / 0.015
-			stock['cci_series'][index] = stock['cci_last'] - algo_params['cci_up']
+			stock['cci_series'][index] = stock['cci_last']
 			
 			if(not stock['active_position'] and (stock['cci_last'] > algo_params['cci_up'])):
 				flip = 1

@@ -22,9 +22,6 @@ import algo
 import graph
 import common
 
-WAIT_FETCHING_SECS = 10
-	
-
 def init_stocks():
 	global ax1, ax2
 
@@ -58,12 +55,12 @@ def init_stocks():
 ###################################################################################################
 #					prog start						  #
 ###################################################################################################
-graph_update_interval = 1
 
 file_index = 0
 best_total = 0
 
-algo_params = algo.init()
+a = algo.init()
+s = settings.init('settings_robo.json')
 
 with open('credentials.json', 'r') as f:
 	creds = json.load(f)
@@ -97,7 +94,7 @@ while(True):
 				common.get_stock_values_live(stock, index)
 		except:
 			print("Error fetching data")
-			time.sleep(WAIT_FETCHING_SECS)
+			time.sleep(s['wait_fetching_secs'])
 			continue
 		
 		# store to file
@@ -105,7 +102,7 @@ while(True):
 
 		# check signals, do transactions
 		for stock in stocks:
-			flip, reason = algo.check_signals(stock, index, algo_params)
+			flip, reason = algo.check_signals(stock, index, a)
 
 			if(flip != 0):
 				money, last_total = common.do_transaction(stock,
@@ -114,12 +111,12 @@ while(True):
 									  money,
 									  last_total,
 									  closed_deals,
-									  algo_params,
+									  a,
 									  index,
 									  do_actions)
 
 		# graph
-		if(do_graph and (index % graph_update_interval == 0)):
+		if(do_graph and (index % s['graph_update_interval'] == 0)):
 			graph.draw(stocks, money_series)
 
 		# re-login after ~every hour
@@ -131,4 +128,4 @@ while(True):
 		time.sleep(WAIT_FETCHING_SECS)		
 		index = index + 1
 
-	best_total = common.count_stats(True, stocks, last_total, best_total, closed_deals, algo_params)
+	best_total = common.count_stats(True, stocks, last_total, best_total, closed_deals, a)

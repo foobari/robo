@@ -8,9 +8,7 @@ import numpy as np
 import math
 import time
 
-FIXED_STOCK_AMOUNT = True # True -> use BUY_STOCKS, False -> use MONEY_PER_TRANSACTION
-BUY_STOCKS = 100
-MONEY_PER_TRANSACTION = 1000
+import settings
 
 def count_stats(final, stocks, last_total, best_total, closed_deals, algo_params):
 	unclosed_deals = 0
@@ -89,10 +87,11 @@ def do_transaction(stock, flip, reason, money, last_total, closed_deals, algo_pa
 		stock['trailing_stop_loss'] = ((1 + algo_params['trailing'] * stock['leverage'] / 100) * sell)
 		stock['signals_list_buy'].append((index, float(stock['sell_series'][-1:])))
 		
-		if(FIXED_STOCK_AMOUNT):
-			stock['stocks'] = BUY_STOCKS
+		s = settings.get_settings()
+		if(s['use_fixed_stock_amount']):
+			stock['stocks'] = s['stock_amount_to_buy']
 		else:
-			stock['stocks'] = int(MONEY_PER_TRANSACTION / sell)
+			stock['stocks'] = int(s['money_per_transaction'] / sell)
 		
 		if(info):
 			print("ACTION: BUY ", stock['name'], stock['stocks'], stock['last_buy'])
