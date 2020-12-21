@@ -124,7 +124,7 @@ while(True):
 			quit()
 		
 		if(s['randomize']):
-			a.randomize_params(a)
+			a = algo.randomize_params(a)
 		
 		if(s['set_params']):
 			if(param_set_index < param_set_len):
