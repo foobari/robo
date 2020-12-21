@@ -3,7 +3,7 @@
 	"stock_amount_to_buy": 100,
 	"money_per_transaction": 100,
 	"graph_update_interval": 20,
-	"randomize": false,
+	"randomize": true,
 	"set_params": false,
-	"one_shot": true
+	"one_shot": false
 }

@@ -1,7 +1,6 @@
 from collections import OrderedDict
 import random
 
-
 def set_new_params(p, index):
 	bp = get_backtest_params()
 	p['cci_up'] 	= bp[index][0]
@@ -10,22 +9,21 @@ def set_new_params(p, index):
 	p['hard'] 	= bp[index][3]
 	p['trailing'] 	= bp[index][4]
 	p['cci_window']	= bp[index][5]
-
 	print("parametrized set", index)
+	return p
 
 
 def randomize_params(p):
-	#p['cci_up'] 	=   241 + (10 - random.random()*20)
-	#p['cci_down'] 	=  -214 + (10 - random.random()*20)
-	p['target'] 	=   0.9919 + (0.5 - random.random()*1.0)
-	p['hard'] 	=  -(0.4 + (0.4 - random.random()*0.8))
-	p['trailing'] 	=  -(0.4 + (0.4 - random.random()*0.8))
-	#p['cci_window'] =    20 + int(random.random()*30)
-
+	p['cci_up'] 	=   241 + (20 - random.random()*40)
+	p['cci_down'] 	=  -214 + (20 - random.random()*40)
+	p['target'] 	=    0.8 + (0.5 - random.random()*1.0)
+	p['hard'] 	=  -(0.5 + (0.5 - random.random()*1.0))
+	p['trailing'] 	=  -(0.5 + (0.5 - random.random()*1.0))
+	p['cci_window'] =    20 + int(random.random()*30)
 	print("randomized", p)
+	return p
 
 def init():
-	# default params, #1 so far
 	algo_params = OrderedDict()
 	algo_params['cci_up'] 		=  249
 	algo_params['cci_down'] 	= -216
@@ -38,9 +36,12 @@ def init():
 
 
 def get_backtest_params():
-	# cci_up		cci_down		target			hard		trailing 	cci_windows
+	# cci_up	cci_down target		hard		trailing 	cci_window
 	backtest_params = (
 	# promising after weekend (2d backtesting) +64e
+		(249,	-216, 	0.71979,	-0.16027,	-0.54079,	28), #1
+		(249,	-216, 	0.71066,	-0.53953,	-0.36993,	28), #2
+		(249,	-216, 	0.72151,	-0.76016,	-0.39281,	28), #3
 		(249,	-216,	0.70481,	-0.29506,	-0.42720,	28),
 		(249,	-216, 	0.71476,	-0.50027,	-0.70258,	28),
 		(249,	-216, 	0.72118,	-0.63302,	-0.63115,	28),
@@ -49,13 +50,11 @@ def get_backtest_params():
 		(249,	-216, 	0.72508,	-0.70280,	-0.71108,	28),
 		(249,	-216, 	0.72593,	-0.74256,	-0.73300,	28),
 		(249,	-216, 	0.72347,	-0.67583,	-0.49178,	28),
-		(249,	-216, 	0.72151,	-0.76016,	-0.39281,	28), #3
-		(249,	-216, 	0.71979,	-0.16027,	-0.54079,	28), #1
 		(249,	-216, 	0.70587,	-0.67426,	-0.76074,	28),
 		(249,	-216, 	0.71197,	-0.30263,	-0.71572,	28),
 		(249,	-216, 	0.71238,	-0.58620,	-0.40590,	28),
 		(249,	-216, 	0.70272,	-0.50986,	-0.61627,	28),
-		(249,	-216, 	0.71066,	-0.53953,	-0.36993,	28), #2
+
 	)
 	return backtest_params
 

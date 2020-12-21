@@ -93,20 +93,20 @@ s = settings.init('settings_backtester.json')
 do_graph, do_actions = common.check_args(sys.argv)
 
 if(s['set_params']):
-	a.set_new_params(a, 0)
+	a = algo.set_new_params(a, 0)
 	param_set_index = param_set_index + 1
 
 if(s['randomize']):
-	a.randomize_params(a)
+	a = algo.randomize_params(a)
 
 if(do_graph):
 	graph.init()
 
 # get all files in dir
-#filenames = get_backtest_files('/home/foobari/src/robogit/robo/backtest/')
+filenames = get_backtest_files('/home/foobari/src/robogit/robo/backtest/')
 
 # only one file
-filenames.append('/home/foobari/src/robogit/robo/backtest/data_21122020_x15.dat')
+#filenames.append('/home/foobari/src/robogit/robo/backtest/data_21122020_x15.dat')
 
 while(True):
 	stocks = init_stocks()
@@ -128,7 +128,7 @@ while(True):
 		
 		if(s['set_params']):
 			if(param_set_index < param_set_len):
-				a.set_new_params(a, param_set_index)
+				a = algo.set_new_params(a, param_set_index)
 				param_set_index = param_set_index + 1
 			else:
 				quit()
