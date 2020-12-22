@@ -7,8 +7,39 @@ from selenium.webdriver.support.ui import Select
 import numpy as np
 import math
 import time
+import json
+import pandas as pd
 
 import settings
+
+def init_stocks(algo_params):
+	with open('stocks.json', 'r') as f:
+		stocks = json.load(f)
+
+	for stock in stocks:
+		stock['valid'] = False
+		stock['buy'] = 0
+		stock['sell'] = 0
+		stock['current_top'] = 0
+		stock['dir'] = 0
+		stock['buy_series'] = pd.Series([])
+		stock['sell_series'] = pd.Series([])
+		stock['sma_series_short'] = pd.Series([])
+		stock['sma_series_long'] = pd.Series([])
+		stock['cci_series'] = pd.Series([])
+		stock['cci_ptyp'] = pd.Series([])
+		stock['cci_last'] = 0
+		stock['signals_list_sell'] = []
+		stock['signals_list_buy'] = []
+		stock['browser'] = 0
+		if(stock['active_position'] and (stock['transaction_type'] == 'sell_away')):
+			stock['trailing_stop_loss'] = ((1 + algo_params['trailing'] * stock['leverage'] / 100) * stock['last_buy'])
+			print("MODE: sell_away", "buy", stock['last_buy'], "hard_stop_loss", stock['hard_stop_loss'])
+		else:
+			stock['hard_stop_loss'] = 0
+			stock['trailing_stop_loss'] = 0
+
+	return stocks
 
 def count_stats(final, stocks, last_total, best_total, closed_deals, algo_params):
 	losses_sum     = 0
@@ -62,8 +93,10 @@ def execute_buy_order_online(stock):
 	# return
 	stock['browser'].get(stock['url'])
 
+
 def execute_sell_order_online(stock):
 	print("Execute sell order", stock['name'])
+
 
 def do_transaction(stock, flip, reason, money, last_total, closed_deals, algo_params, index, info):
 	buy  = float(stock['buy_series'][-1:])
@@ -100,6 +133,11 @@ def do_transaction(stock, flip, reason, money, last_total, closed_deals, algo_pa
 			print("ACTION: SELL", stock['name'], stock['stocks'], buy, reason, "result", round(float(closed_deals[-1]), 2) , "total", round(last_total, 2))
 		#execute_sell_order_online(stock)
 		stock['stocks'] = 0
+
+		if(stock['transaction_type'] == 'sell_away'):
+			print("sell_away completed, exit")
+			logout(stock)
+			quit()
 
 	return money, last_total
 

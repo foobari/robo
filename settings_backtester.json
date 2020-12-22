@@ -7,5 +7,5 @@
 	"set_params": false,
 	"one_shot": true,
 	"file_dir": "/home/foobari/src/robogit/robo/backtest/",
-	"file_name": "*.dat"
+	"file_name": "data_22122020_x15.dat"
 }

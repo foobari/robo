@@ -23,35 +23,6 @@ import graph
 import common
 import settings
 
-def init_stocks():
-	global ax1, ax2
-
-	with open('stocks.json', 'r') as f:
-		stocks = json.load(f)
-
-	for stock in stocks:
-		stock['valid'] = False
-		stock['active_position'] = False
-		stock['buy'] = 0
-		stock['sell'] = 0
-		stock['last_buy'] = 0
-		stock['stocks'] = 0
-		stock['current_top'] = 0
-		stock['hard_stop_loss'] = 0
-		stock['dir'] = 0
-		stock['trailing_stop_loss'] = 0
-		stock['buy_series'] = pd.Series([])
-		stock['sell_series'] = pd.Series([])
-		stock['sma_series_short'] = pd.Series([])
-		stock['sma_series_long'] = pd.Series([])
-		stock['cci_series'] = pd.Series([])
-		stock['cci_ptyp'] = pd.Series([])
-		stock['cci_last'] = 0
-		stock['signals_list_sell'] = []
-		stock['signals_list_buy'] = []
-		stock['browser'] = 0
-
-	return stocks
 
 ###################################################################################################
 #					prog start						  #
@@ -72,7 +43,7 @@ if(do_graph):
 	graph.init()
 
 while(True):
-	stocks = init_stocks()
+	stocks = common.init_stocks(a)
 	closed_deals = []
 	money_series = pd.Series([])
 	index = 0

@@ -2,15 +2,23 @@
 	{
 		"name": "BULL DAX X15S NORDNET F",
 		"type": "long",
+		"transaction_type": "auto",
 		"leverage": 15,
 		"spread": 0.06,
+		"active_position": false,
+		"last_buy": 0.0,
+		"stocks": 0,
 		"url": "https://www.nordnet.fi/markkinakatsaus/sertifikaatit/17243274-bull-dax-x-15-s"
 	},
 	{
 		"name": "BEAR DAX X15S NORDNET F2",
 		"type": "short",
+		"transaction_type": "auto",
 		"leverage": 15,
 		"spread": 0.10,
+		"active_position": false,
+		"last_buy": 0,
+		"stocks": 0,
 		"url": "https://www.nordnet.fi/markkinakatsaus/sertifikaatit/17382605-bear-dax-x-15-s"
 	}
 ]

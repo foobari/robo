@@ -14,24 +14,24 @@ def set_new_params(p, index):
 
 
 def randomize_params(p):
-	p['cci_up'] 	=   241 + (20 - random.random()*40)
-	p['cci_down'] 	=  -214 + (20 - random.random()*40)
-	p['target'] 	=    0.8 + (0.5 - random.random()*1.0)
-	p['hard'] 	=  -(0.5 + (0.5 - random.random()*1.0))
-	p['trailing'] 	=  -(0.5 + (0.5 - random.random()*1.0))
-	p['cci_window'] =    20 + int(random.random()*30)
+	#p['cci_up'] 	=   241 + (100 - random.random()*200)
+	#p['cci_down'] 	=  -214 + (20 - random.random()*40)
+	#p['target'] 	=    0.8 + (0.5 - random.random()*1.0)
+	#p['hard'] 	=  -(0.5 + (0.5 - random.random()*1.0))
+	#p['trailing'] 	=  -(0.5 + (0.5 - random.random()*1.0))
+	p['cci_window'] =    20 + int(random.random()*100)
 	print("randomized")
 	return p
 
 def init():
-	algo_params = OrderedDict()
-	algo_params['cci_up'] 		=  249
-	algo_params['cci_down'] 	= -216
-	algo_params['target'] 		=   0.71979  # target stop for dax to move +x %
-	algo_params['hard'] 		=  -0.16027  # hard stop-loss if entry dax comes down x %
-	algo_params['trailing'] 	=  -0.54079  # trailing stop-loss if in active position dax comes down x % from current top
-	algo_params['cci_window'] 	=  28
-	return algo_params
+	p = OrderedDict()
+	p['cci_up'] 	=  249
+	p['cci_down'] 	= -216
+	p['target'] 	=   0.71979  # target stop for dax to move +x %
+	p['hard'] 	=  -0.16027  # hard stop-loss if entry dax comes down x %
+	p['trailing'] 	=  -0.54079  # trailing stop-loss if in active position dax comes down x % from current top
+	p['cci_window'] =  28
+	return p
 
 
 

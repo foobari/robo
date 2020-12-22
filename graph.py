@@ -59,3 +59,4 @@ def draw(stocks, money):
 
 def init():
 	plt.ion()
+
