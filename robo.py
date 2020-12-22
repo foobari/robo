@@ -103,7 +103,8 @@ while(True):
 
 		# check signals, do transactions
 		for stock in stocks:
-			flip, reason = algo.check_signals(stock, index, a)
+			is_last = False
+			flip, reason = algo.check_signals(stock, index, a, is_last)
 
 			if(flip != 0):
 				money, last_total = common.do_transaction(stock,

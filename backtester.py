@@ -17,9 +17,10 @@ import common
 import settings
 
 
-def get_backtest_files(folder_path):
+def get_backtest_files(folder_path, file_name):
 	files = []
-	for file in glob.glob(os.path.join(folder_path, '*')):
+	for file in glob.glob(os.path.join(folder_path, file_name)):
+		print file
 		files.append(file)
 
 	return files
@@ -102,11 +103,8 @@ if(s['randomize']):
 if(do_graph):
 	graph.init()
 
-# get all files in dir
-filenames = get_backtest_files('/home/foobari/src/robogit/robo/backtest/')
-
-# only one file
-#filenames.append('/home/foobari/src/robogit/robo/backtest/data_21122020_x15.dat')
+# get file(s)
+filenames = get_backtest_files(s['file_dir'], s['file_name'])
 
 while(True):
 	stocks = init_stocks()
@@ -146,7 +144,8 @@ while(True):
 
 		# check signals, do transactions
 		for stock in stocks:
-			flip, reason = algo.check_signals(stock, index, a)
+			is_last = (index == (entries - 1))
+			flip, reason = algo.check_signals(stock, index, a, is_last)
 
 			if(flip != 0):
 				money, last_total = common.do_transaction(stock,

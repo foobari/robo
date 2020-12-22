@@ -11,18 +11,9 @@ import time
 import settings
 
 def count_stats(final, stocks, last_total, best_total, closed_deals, algo_params):
-	unclosed_deals = 0
-	pending_money  = 0
 	losses_sum     = 0
 	sharpe         = 0
 	profitability  = 0
-
-	for stock in stocks:
-		if(stock['active_position']):
-			unclosed_deals = unclosed_deals + 1
-			closing_sell = ((float(stock['buy_series'][-1:]) - stock['last_buy']) * stock['stocks'])
-			closed_deals.append(closing_sell)
-			last_total = last_total + closing_sell
 
 	if(len(closed_deals) > 0):
 		if(np.std(closed_deals) != 0):
@@ -45,7 +36,7 @@ def count_stats(final, stocks, last_total, best_total, closed_deals, algo_params
 
 	best_total = best_total + last_total
 
-	print("profit", round(last_total, 2), "algo closed", len(closed_deals) - unclosed_deals, "force closed", unclosed_deals, "metrics", round(sharpe, 2), round(profitability, 2), round(profit_factor, 2))
+	print("profit", round(last_total, 2), "closed", len(closed_deals), "metrics", round(sharpe, 2), round(profitability, 2), round(profit_factor, 2))
 
 	if(final):
 		print("total", round(best_total, 2), algo_params)

@@ -20,16 +20,16 @@ def randomize_params(p):
 	p['hard'] 	=  -(0.5 + (0.5 - random.random()*1.0))
 	p['trailing'] 	=  -(0.5 + (0.5 - random.random()*1.0))
 	p['cci_window'] =    20 + int(random.random()*30)
-	print("randomized", p)
+	print("randomized")
 	return p
 
 def init():
 	algo_params = OrderedDict()
 	algo_params['cci_up'] 		=  249
 	algo_params['cci_down'] 	= -216
-	algo_params['target'] 		=   0.70481  # target stop for dax to move +x %
-	algo_params['hard'] 		=  -0.29506  # hard stop-loss if entry dax comes down x %
-	algo_params['trailing'] 	=  -0.42720  # trailing stop-loss if in active position dax comes down x % from current top
+	algo_params['target'] 		=   0.71979  # target stop for dax to move +x %
+	algo_params['hard'] 		=  -0.16027  # hard stop-loss if entry dax comes down x %
+	algo_params['trailing'] 	=  -0.54079  # trailing stop-loss if in active position dax comes down x % from current top
 	algo_params['cci_window'] 	=  28
 	return algo_params
 
@@ -38,10 +38,10 @@ def init():
 def get_backtest_params():
 	# cci_up	cci_down target		hard		trailing 	cci_window
 	backtest_params = (
-	# promising after weekend (2d backtesting) +64e
-		(249,	-216, 	0.71979,	-0.16027,	-0.54079,	28), #1
-		(249,	-216, 	0.71066,	-0.53953,	-0.36993,	28), #2
-		(249,	-216, 	0.72151,	-0.76016,	-0.39281,	28), #3
+	# promising after weekend (3d backtesting)
+		(249,	-216, 	0.71979,	-0.16027,	-0.54079,	28), #1 +139e
+		(249,	-216, 	0.71066,	-0.53953,	-0.36993,	28), #2 +137e
+		(249,	-216, 	0.72151,	-0.76016,	-0.39281,	28), #3 +136e
 		(249,	-216,	0.70481,	-0.29506,	-0.42720,	28),
 		(249,	-216, 	0.71476,	-0.50027,	-0.70258,	28),
 		(249,	-216, 	0.72118,	-0.63302,	-0.63115,	28),
@@ -59,7 +59,7 @@ def get_backtest_params():
 	return backtest_params
 
 
-def check_signals(stock, index, algo_params):
+def check_signals(stock, index, algo_params, is_last):
 	SMA_SHORT = 200
 	SMA_LONG =  1200
 
@@ -130,5 +130,11 @@ def check_signals(stock, index, algo_params):
 			if(sell >= target_price):
 				reason = "target"
 				flip = -1
+
+	# exit day-end
+	if(True):
+		if(stock['active_position'] and is_last):
+			reason = "day_close"
+			flip = -1
 
 	return flip, reason
