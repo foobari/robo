@@ -56,11 +56,10 @@ def count_stats(final, stocks, last_total, best_total, closed_deals, algo_params
 		losses  = [i for i in closed_deals if i < 0]
 		profit_sum = (sum(profits))
 		losses_sum = -(sum(losses))
-		profitability = 0
 
 	if(len(closed_deals) > 0):
 		profitability = float(len(profits) / float(len(closed_deals)))
-	if(losses_sum > 0):
+	if(losses_sum != 0):
 		profit_factor = profit_sum/losses_sum
 	else:
 		profit_factor = 100
@@ -115,7 +114,7 @@ def do_transaction(stock, flip, reason, money, last_total, closed_deals, algo_pa
 		if(s['use_fixed_stock_amount']):
 			stock['stocks'] = s['stock_amount_to_buy']
 		else:
-			stock['stocks'] = int(s['money_per_transaction'] / sell)
+			stock['stocks'] = stock['transaction_size']
 		
 		if(info):
 			print("ACTION: BUY ", stock['name'], stock['stocks'], stock['last_buy'])

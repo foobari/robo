@@ -1,5 +1,5 @@
 {
-	"use_fixed_stock_amount": true,
+	"use_fixed_stock_amount": false,
 	"stock_amount_to_buy": 100,
 	"money_per_transaction": 100,
 	"graph_update_interval": 1,

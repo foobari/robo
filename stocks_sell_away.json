@@ -1,14 +1,14 @@
 [
 	{
 		"name": "BEAR DAX X15S NORDNET F2",
+		"url": "https://www.nordnet.fi/markkinakatsaus/sertifikaatit/17382605-bear-dax-x-15-s",
 		"type": "short",
-		"transaction_type": "sell_away",
 		"leverage": 15,
 		"spread": 0.10,
+		"transaction_type": "sell_away",
 		"active_position": true,
 		"last_buy": 5.98,
 		"hard_stop_loss": 5.95,
-		"stocks": 100,
-		"url": "https://www.nordnet.fi/markkinakatsaus/sertifikaatit/17382605-bear-dax-x-15-s"
+		"stocks": 100
 	}
 ]
