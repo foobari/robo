@@ -52,15 +52,14 @@ def get_backtest_data(file):
 filenames = []
 file_index = 0
 best_total = 0
-
 param_set_index = 0
-backtest_params = algo.get_backtest_params()
-param_set_len = len(backtest_params)
+
+i_file, o_file, do_graph, do_actions = common.check_args(sys.argv)
+
+backtest_params, param_set_len = algo.get_backtest_params()
 
 a = algo.init()
 s = settings.init('settings_backtester.json')
-
-do_graph, do_actions = common.check_args(sys.argv)
 
 if(s['set_params']):
 	a = algo.set_new_params(a, 0)
@@ -76,7 +75,7 @@ if(do_graph):
 filenames = get_backtest_files(s['file_dir'], s['file_name'])
 
 while(True):
-	stocks = common.init_stocks(a)
+	stocks = common.init_stocks(a, i_file)
 	closed_deals = []
 	money_series = pd.Series([])
 	index = 0

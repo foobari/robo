@@ -60,7 +60,7 @@ def get_backtest_params():
 		#(249,	-216, 	0.71238,	-0.58620,	-0.40590,	28),
 		#(249,	-216, 	0.70272,	-0.50986,	-0.61627,	28),
 	)
-	return backtest_params
+	return backtest_params, len(backtest_params)
 
 
 def check_signals(stock, index, algo_params, is_last):

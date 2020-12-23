@@ -27,9 +27,11 @@ import settings
 ###################################################################################################
 #					prog start						  #
 ###################################################################################################
-
 file_index = 0
 best_total = 0
+
+i_file, o_file, do_graph, do_actions = common.check_args(sys.argv)
+
 
 a = algo.init()
 s = settings.init('settings_robo.json')
@@ -37,13 +39,11 @@ s = settings.init('settings_robo.json')
 with open('credentials.json', 'r') as f:
 	creds = json.load(f)
 
-do_graph, do_actions = common.check_args(sys.argv)
-
 if(do_graph):
 	graph.init()
 
 while(True):
-	stocks = common.init_stocks(a)
+	stocks = common.init_stocks(a, i_file)
 	closed_deals = []
 	money_series = pd.Series([])
 	index = 0
@@ -70,7 +70,7 @@ while(True):
 			continue
 		
 		# store to file
-		common.store_stock_values(stocks, index)
+		common.store_stock_values(stocks, index, o_file)
 
 		# check signals, do transactions
 		for stock in stocks:

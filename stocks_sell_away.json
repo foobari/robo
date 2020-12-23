@@ -1,14 +1,15 @@
 [
 	{
-		"name": "BEAR DAX X15S NORDNET F2",
-		"url": "https://www.nordnet.fi/markkinakatsaus/sertifikaatit/17382605-bear-dax-x-15-s",
+		"name": "T SHRT DAX NORDNET F23",
+		"url": "https://www.nordnet.fi/markkinakatsaus/unlimited-turbot/16786298-t-shrt-dax",
 		"type": "short",
-		"leverage": 15,
-		"spread": 0.10,
+		"leverage": 20,
+		"spread": 0.06,
 		"transaction_type": "sell_away",
 		"active_position": true,
-		"last_buy": 5.98,
-		"hard_stop_loss": 5.95,
-		"stocks": 100
+		"last_buy": 2.95,
+		"hard_stop_loss": 2.85,
+		"stocks": 100,
+		"store_to_file": false
 	}
 ]

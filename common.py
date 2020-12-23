@@ -9,11 +9,13 @@ import math
 import time
 import json
 import pandas as pd
+import getopt
+import sys
 
 import settings
 
-def init_stocks(algo_params):
-	with open('stocks.json', 'r') as f:
+def init_stocks(algo_params, file):
+	with open(file, 'r') as f:
 		stocks = json.load(f)
 
 	for stock in stocks:
@@ -34,7 +36,7 @@ def init_stocks(algo_params):
 		stock['browser'] = 0
 		if(stock['active_position'] and (stock['transaction_type'] == 'sell_away')):
 			stock['trailing_stop_loss'] = ((1 + algo_params['trailing'] * stock['leverage'] / 100) * stock['last_buy'])
-			print("MODE: sell_away", "buy", stock['last_buy'], "hard_stop_loss", stock['hard_stop_loss'])
+			print("MODE: sell_away", "buy", stock['last_buy'], "hard_stop_loss", stock['hard_stop_loss'], stock['stocks'])
 		else:
 			stock['hard_stop_loss'] = 0
 			stock['trailing_stop_loss'] = 0
@@ -88,6 +90,7 @@ def execute_buy_order_online(stock):
 	price = 2.11
 	WebDriverWait(stock['browser'], 10).until(EC.presence_of_element_located((By.XPATH, '//*[@id="main-content"]/div[2]/div/div/div[3]/div/div/div/div[2]/div[1]/div[2]/div[2]/div/input'))).send_keys(str(price))
 	# execute	
+	time.sleep(0.5)
 	WebDriverWait(stock['browser'], 10).until(EC.presence_of_element_located((By.XPATH, '//*[@id="main-content"]/div[2]/div/div/div[3]/div/div/div/div[2]/div[7]/span/button/div/span'))).click()
 	# return
 	stock['browser'].get(stock['url'])
@@ -95,6 +98,24 @@ def execute_buy_order_online(stock):
 
 def execute_sell_order_online(stock):
 	print("Execute sell order", stock['name'])
+	# click sell
+	WebDriverWait(stock['browser'], 10).until(EC.presence_of_element_located((By.XPATH, '//*[@id="main-content"]/div[1]/div[1]/div/div/div/div/div/div[2]/div[2]/div[2]/a'))).click()
+	# select first account
+	Select(WebDriverWait(stock['browser'], 10).until(EC.presence_of_element_located((By.XPATH, '//*[@id="main-content"]/div[2]/div/div/div[3]/div/div/div/div[1]/div[1]/div/div/div/select')))).select_by_value('1')
+	# quantity
+	amount = stock['stocks']
+	WebDriverWait(stock['browser'], 10).until(EC.presence_of_element_located((By.XPATH, '//*[@id="main-content"]/div[2]/div/div/div[3]/div/div/div/div[2]/div[1]/div[1]/div[2]/div/input'))).send_keys(str(amount))
+	# price
+	#price = 4.00
+	#WebDriverWait(stock['browser'], 10).until(EC.presence_of_element_located((By.XPATH, '//*[@id="main-content"]/div[2]/div/div/div[3]/div/div/div/div[2]/div[1]/div[2]/div[2]/div/input'))).send_keys(u'\ue009' + u'\ue003')
+	#WebDriverWait(stock['browser'], 10).until(EC.presence_of_element_located((By.XPATH, '//*[@id="main-content"]/div[2]/div/div/div[3]/div/div/div/div[2]/div[1]/div[2]/div[2]/div/input'))).send_keys(str(price))
+
+	#execute
+	time.sleep(0.5)
+	WebDriverWait(stock['browser'], 10).until(EC.presence_of_element_located((By.XPATH, '//*[@id="main-content"]/div[2]/div/div/div[3]/div/div/div/div[2]/div[7]/span/button/div/span'))).click()
+
+	# return
+	stock['browser'].get(stock['url'])
 
 
 def do_transaction(stock, flip, reason, money, last_total, closed_deals, algo_params, index, info):
@@ -130,7 +151,13 @@ def do_transaction(stock, flip, reason, money, last_total, closed_deals, algo_pa
 		stock['signals_list_sell'].append((index, float(stock['buy_series'][-1:])))
 		if(info):
 			print("ACTION: SELL", stock['name'], stock['stocks'], buy, reason, "result", round(float(closed_deals[-1]), 2) , "total", round(last_total, 2))
-		#execute_sell_order_online(stock)
+		
+		##################################################
+		#  real online ONLY for 'sell-away' mode for now #
+		##################################################
+		if(stock['transaction_type'] == 'sell_away'):
+			execute_sell_order_online(stock)
+		
 		stock['stocks'] = 0
 
 		if(stock['transaction_type'] == 'sell_away'):
@@ -198,8 +225,11 @@ def get_stock_values_live(stock, index):
 			stock['sell_series'][index] = stock['sell_series'][index - 1]
 
 
-def store_stock_values(stocks, index):
+def store_stock_values(stocks, index, file):
+	do_write = True
 	for stock in stocks:
+		if(stock['store_to_file'] == False):
+			do_write = False
 		if(stock['type'] == 'long'):
 			buy_long  = stock['buy_series'][index]
 			sell_long = stock['sell_series'][index]
@@ -208,9 +238,10 @@ def store_stock_values(stocks, index):
 			sell_short = stock['sell_series'][index]
 
 	# store
-	f = open("guru99.txt","a+")
-	f.write(str((buy_long, sell_long, buy_short, sell_short)) + '\n')
-	f.close()
+	if(do_write):
+		f = open(file,"a+")
+		f.write(str((buy_long, sell_long, buy_short, sell_short)) + '\n')
+		f.close()
 
 
 def login(stock, creds):
@@ -230,14 +261,33 @@ def login(stock, creds):
 def logout(stock):
 	stock['browser'].close()
 
-def check_args(arglist):
-	do_graph   = False
+
+def check_args(argv):
+	inputfile = ''
+	outputfile = 'guru99.txt'
+	do_graph = False
 	do_actions = False
 
-	for i in arglist:
-		if(i == "graph"):
+	try:
+		opts, args = getopt.getopt(argv[1:],"hgai:o:")
+	except getopt.GetoptError:
+		print 'test.py -i <inputfile> -o <outputfile>'
+		sys.exit(2)
+	for opt, arg in opts:
+		if opt == '-h':
+			print argv[0], '-i <inputfile> -o <outputfile>'
+			sys.exit()
+		elif opt in ("-i"):
+			inputfile = arg
+		elif opt in ("-o"):
+			outputfile = arg
+		elif opt in ("-g"):
 			do_graph = True
-		if(i == "actions"):
+		elif opt in ("-a"):
 			do_actions = True
 
-	return do_graph, do_actions
+	if(inputfile == ''):
+			print argv[0], '-i <inputfile> -o <outputfile>'
+			sys.exit()
+
+	return inputfile, outputfile, do_graph, do_actions
