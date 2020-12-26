@@ -1,0 +1,8 @@
+v0.1.0
+------
+after 1st big data crunch of 5d
+
+cap_std = 0.001
+
+eur	deals	sharpe	prfbtl	prf_f	cci_up		cc_down		target		hard		trailing	cci_window
+181	14	1.78	0.79	13.35	284.568471	-124.732507	0.979095	-0.416562	-0.557422	100

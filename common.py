@@ -14,6 +14,12 @@ import sys
 
 import settings
 
+g_closed_deals = []
+stats = {}
+stats['sharpe'] = 0
+stats['profitability'] = 0
+stats['profit_factor'] = 0
+
 def init_stocks(algo_params, file):
 	with open(file, 'r') as f:
 		stocks = json.load(f)
@@ -43,36 +49,45 @@ def init_stocks(algo_params, file):
 
 	return stocks
 
-def count_stats(final, stocks, last_total, best_total, closed_deals, algo_params):
-	losses_sum     = 0
-	sharpe         = 0
-	profitability  = 0
-
+def calc_stats(closed_deals):
 	if(len(closed_deals) > 0):
 		if(np.std(closed_deals) != 0):
-			sharpe = math.sqrt(len(closed_deals)) * np.mean(closed_deals) / np.std(closed_deals)
+			stats['sharpe'] = math.sqrt(len(closed_deals)) * np.mean(closed_deals) / np.std(closed_deals)
 		else:
-			sharpe = 0
+			stats['sharpe'] = 0
 
 		profits = [i for i in closed_deals if i >= 0]
 		losses  = [i for i in closed_deals if i < 0]
-		profit_sum = (sum(profits))
+		profits_sum = (sum(profits))
 		losses_sum = -(sum(losses))
+		stats['profitability'] = float(len(profits) / float(len(closed_deals)))
 
-	if(len(closed_deals) > 0):
-		profitability = float(len(profits) / float(len(closed_deals)))
-	if(losses_sum != 0):
-		profit_factor = profit_sum/losses_sum
-	else:
-		profit_factor = 100
+		if(losses_sum != 0):
+			stats['profit_factor'] = profits_sum/losses_sum
+		else:
+			stats['profit_factor'] = 100
+
+	return stats
+
+def count_stats(final, stocks, last_total, best_total, closed_deals, algo_params):
+	global g_closed_deals
+	global stats
+
+	g_closed_deals.extend(closed_deals)
+
+	stats = calc_stats(closed_deals)
 
 	best_total = best_total + last_total
 
-	print("profit", round(last_total, 2), "closed", len(closed_deals), "metrics", round(sharpe, 2), round(profitability, 2), round(profit_factor, 2))
+	print(round(last_total, 2), len(closed_deals), round(stats['sharpe'], 2), round(stats['profitability'], 2), round(stats['profit_factor'], 2))
 
 	if(final):
-		print("total", round(best_total, 2), algo_params)
+		stats = calc_stats(g_closed_deals)
+		print("---------------------------")
+		print("T:", round(best_total, 2), len(g_closed_deals), round(stats['sharpe'], 2), round(stats['profitability'], 2), round(stats['profit_factor'], 2), algo_params)
 		print
+		del g_closed_deals[:]
+		first_time = True
 
 	return best_total
 

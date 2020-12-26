@@ -2,7 +2,7 @@ from collections import OrderedDict
 import random
 
 def set_new_params(p, index):
-	bp = get_backtest_params()
+	bp, len = get_backtest_params()
 	p['cci_up'] 	= bp[index][0]
 	p['cci_down'] 	= bp[index][1]
 	p['target']	= bp[index][2]
@@ -12,17 +12,13 @@ def set_new_params(p, index):
 	print("parametrized set", index)
 	return p
 
-def random_range(low, high):
-	rand = low + random.random()*(high-low)
-	return rand
-
 def randomize_params(p):
-	p['cci_up'] 	=   random_range(229, 269)
-	p['cci_down'] 	=  -random_range(196, 236)
-	p['target'] 	=   random_range(0.50, 1.00)
-	p['hard'] 	=  -random_range(0.15, 0.80)
-	p['trailing'] 	=  -random_range(0.30, 0.80)
-	p['cci_window'] =   int(random_range(20, 40))
+	p['cci_up'] 	=  random.uniform(284-20, 284+20)
+	p['cci_down'] 	=  random.uniform(-124-20, -124+20)
+	p['target'] 	=  random.uniform(0.97-0.20, 0.97+0.20)
+	p['hard'] 	=  random.uniform(-0.41-0.20, -0.41+0.20)
+	p['trailing'] 	=  random.uniform(-0.55-0.20, -0.55+0.20)
+	p['cci_window'] =  int(random.uniform(80, 120))
 	print("randomized", p)
 	return p
 
@@ -39,14 +35,16 @@ def init():
 
 
 def get_backtest_params():
-	# cci_up   cci_down 	target		hard		trailing 	cci_window
+	# 	cci_up   	cci_down 	target		hard		trailing 	cci_window
 	backtest_params = (
-		# 4d tests
-		(249,	-216, 	0.71979,	-0.16027,	-0.54079,	28), #1  131e
-		(249,	-216, 	0.51979,	-0.16027,	-0.54079,	28), #2  111e
-		#(249,	-216, 	0.71197,	-0.30263,	-0.71572,	28), #3   95e
-		#(249,	-216, 	0.71066,	-0.53953,	-0.36993,	28), #    76e
-		#(249,	-216, 	0.72593,	-0.74256,	-0.73300,	28), #    60e
+		# 5d tests
+		(284.568471,	-124.732507,	0.979095,	-0.416562,	-0.557422,	100), #v0.1.0 5d sharpe = 1.78
+		(252.3, 	-120.4, 	0.68466,	-0.63997,	-0.39966,	391), #1  115.99,  7, 1.01
+		(249,	-216, 	0.71979,	-0.16027,	-0.54079,	28), #1  106.42, 18, 1.14
+		(249,	-216, 	0.51979,	-0.16027,	-0.54079,	28), #2   86.20, 20, 0.80
+		(249,	-216, 	0.71197,	-0.30263,	-0.71572,	28), #3   49.02, 18, 0.45
+		#(249,	-216, 	0.71066,	-0.53953,	-0.36993,	28), #
+		#(249,	-216, 	0.72593,	-0.74256,	-0.73300,	28), #
 		#(249,	-202,	0.76124,	-0.70585,	-0.63692,	39), #! 174e 4d (good but strange, big changes)
 		#(249,	-216, 	0.72151,	-0.76016,	-0.39281,	28),
 		#(249,	-216,	0.70481,	-0.29506,	-0.42720,	28),
