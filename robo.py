@@ -22,6 +22,7 @@ import algo
 import graph
 import common
 import settings
+import online
 
 
 ###################################################################################################
@@ -30,7 +31,7 @@ import settings
 file_index = 0
 best_total = 0
 
-i_file, o_file, do_graph, do_actions = common.check_args(sys.argv)
+dry_run, i_file, o_file, do_graph, do_actions = common.check_args(sys.argv)
 
 
 a = algo.init()
@@ -54,7 +55,7 @@ while(True):
 
 	# Here we go, login to Nordnet
 	for stock in stocks:
-		common.login(stock, creds)
+		online.login(stock, creds)
 
 	# Run for one day max in live trading
 	while(index < entries):
@@ -63,7 +64,7 @@ while(True):
 		# live data from Nordnet
 		try:
 			for stock in stocks:
-				common.get_stock_values_live(stock, index)
+				online.get_stock_values(stock, index)
 		except:
 			print("Error fetching data")
 			time.sleep(s['wait_fetching_secs'])
@@ -86,7 +87,8 @@ while(True):
 									  closed_deals,
 									  a,
 									  index,
-									  do_actions)
+									  do_actions,
+									  dry_run)
 
 		# graph
 		if(do_graph and (index % s['graph_update_interval'] == 0)):
@@ -95,8 +97,8 @@ while(True):
 		# re-login after ~every hour
 		if(((index+1) % 300) == 0):
 			for stock in stocks:
-				common.logout(stock)
-				common.login(stock, creds)
+				online.logout(stock)
+				online.login(stock, creds)
 
 		time.sleep(s['wait_fetching_secs'])
 		index = index + 1

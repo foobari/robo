@@ -15,18 +15,19 @@ import algo
 import graph
 import common
 import settings
+import online
 
 
 def get_backtest_files(folder_path, file_name):
 	files = []
 	for file in glob.glob(os.path.join(folder_path, file_name)):
-		print file
 		files.append(file)
 
 	return files
 
 def get_backtest_data(file):
 	backtest_data = []
+	print("Open backtest file", file)
 	with open(file, "rb") as fp:
 		for i in fp.readlines():
 			tmp = i.replace('(','')
@@ -41,7 +42,7 @@ def get_backtest_data(file):
 		fp.close()
 
 	entries = len(backtest_data)
-	print("read", file, entries)
+	print(file, entries)
 	return backtest_data, entries
 
 	
@@ -54,9 +55,10 @@ file_index = 0
 best_total = 0
 param_set_index = 0
 
-i_file, o_file, do_graph, do_actions = common.check_args(sys.argv)
+dry_run, i_file, o_file, do_graph, do_actions = common.check_args(sys.argv)
+dry_run = True
 
-backtest_params, param_set_len = algo.get_backtest_params()
+backtest_params = algo.get_backtest_params()
 
 a = algo.init()
 s = settings.init('settings_backtester.json')
@@ -93,7 +95,7 @@ while(True):
 			a = algo.randomize_params(a)
 		
 		if(s['set_params']):
-			if(param_set_index < param_set_len):
+			if(param_set_index < len(backtest_params)):
 				a = algo.set_new_params(a, param_set_index)
 				param_set_index = param_set_index + 1
 			else:
@@ -106,9 +108,9 @@ while(True):
 	while(index < entries):
 		money_series[index] = money
 
-		# data from backtest data from files
+		# data from backtest files
 		for stock in stocks:
-			common.get_stock_values_backtest(stock, index, backtest_data)
+			online.get_stock_values(stock, index, backtest_data)
 
 		# check signals, do transactions
 		for stock in stocks:
@@ -124,7 +126,8 @@ while(True):
 									  closed_deals,
 									  a,
 									  index,
-									  do_actions)
+									  do_actions,
+									  dry_run)
 
 		# graph
 		if(do_graph and (index % s['graph_update_interval'] == 0)):

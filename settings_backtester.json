@@ -1,10 +1,10 @@
 {
 	"use_fixed_stock_amount": false,
 	"money_per_transaction": 100,
-	"graph_update_interval": 20,
-	"randomize": true,
+	"graph_update_interval": 10,
+	"randomize": false,
 	"set_params": false,
-	"one_shot": false,
+	"one_shot": true,
 	"file_dir": "/home/foobari/src/robogit/robo/backtest/",
-	"file_name": "data_*.dat"
+	"file_name": "data_28*.dat"
 }

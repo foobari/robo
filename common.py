@@ -13,6 +13,7 @@ import getopt
 import sys
 
 import settings
+import online
 
 g_closed_deals = []
 stats = {}
@@ -21,6 +22,7 @@ stats['profitability'] = 0
 stats['profit_factor'] = 0
 
 def init_stocks(algo_params, file):
+	print("Open stocks file", file)
 	with open(file, 'r') as f:
 		stocks = json.load(f)
 
@@ -92,48 +94,7 @@ def count_stats(final, stocks, last_total, best_total, closed_deals, algo_params
 	return best_total
 
 
-def execute_buy_order_online(stock):
-	print("Execute buy order", stock['name'])
-	# click buy
-	WebDriverWait(stock['browser'], 10).until(EC.presence_of_element_located((By.XPATH, '//*[@id="main-content"]/div[1]/div[1]/div/div/div/div/div/div[2]/div[2]/div[1]/a'))).click()
-	# select first account
-	Select(WebDriverWait(stock['browser'], 10).until(EC.presence_of_element_located((By.XPATH, '//*[@id="main-content"]/div[2]/div/div/div[3]/div/div/div/div[1]/div[1]/div/div/div/select')))).select_by_value('1')
-	# quantity
-	amount = 100
-	WebDriverWait(stock['browser'], 10).until(EC.presence_of_element_located((By.XPATH, '//*[@id="main-content"]/div[2]/div/div/div[3]/div/div/div/div[2]/div[1]/div[1]/div[2]/div/input'))).send_keys(str(amount))
-	# price
-	price = 2.11
-	WebDriverWait(stock['browser'], 10).until(EC.presence_of_element_located((By.XPATH, '//*[@id="main-content"]/div[2]/div/div/div[3]/div/div/div/div[2]/div[1]/div[2]/div[2]/div/input'))).send_keys(str(price))
-	# execute	
-	time.sleep(0.5)
-	WebDriverWait(stock['browser'], 10).until(EC.presence_of_element_located((By.XPATH, '//*[@id="main-content"]/div[2]/div/div/div[3]/div/div/div/div[2]/div[7]/span/button/div/span'))).click()
-	# return
-	stock['browser'].get(stock['url'])
-
-
-def execute_sell_order_online(stock):
-	print("Execute sell order", stock['name'])
-	# click sell
-	WebDriverWait(stock['browser'], 10).until(EC.presence_of_element_located((By.XPATH, '//*[@id="main-content"]/div[1]/div[1]/div/div/div/div/div/div[2]/div[2]/div[2]/a'))).click()
-	# select first account
-	Select(WebDriverWait(stock['browser'], 10).until(EC.presence_of_element_located((By.XPATH, '//*[@id="main-content"]/div[2]/div/div/div[3]/div/div/div/div[1]/div[1]/div/div/div/select')))).select_by_value('1')
-	# quantity
-	amount = stock['stocks']
-	WebDriverWait(stock['browser'], 10).until(EC.presence_of_element_located((By.XPATH, '//*[@id="main-content"]/div[2]/div/div/div[3]/div/div/div/div[2]/div[1]/div[1]/div[2]/div/input'))).send_keys(str(amount))
-	# price
-	#price = 4.00
-	#WebDriverWait(stock['browser'], 10).until(EC.presence_of_element_located((By.XPATH, '//*[@id="main-content"]/div[2]/div/div/div[3]/div/div/div/div[2]/div[1]/div[2]/div[2]/div/input'))).send_keys(u'\ue009' + u'\ue003')
-	#WebDriverWait(stock['browser'], 10).until(EC.presence_of_element_located((By.XPATH, '//*[@id="main-content"]/div[2]/div/div/div[3]/div/div/div/div[2]/div[1]/div[2]/div[2]/div/input'))).send_keys(str(price))
-
-	#execute
-	time.sleep(0.5)
-	WebDriverWait(stock['browser'], 10).until(EC.presence_of_element_located((By.XPATH, '//*[@id="main-content"]/div[2]/div/div/div[3]/div/div/div/div[2]/div[7]/span/button/div/span'))).click()
-
-	# return
-	stock['browser'].get(stock['url'])
-
-
-def do_transaction(stock, flip, reason, money, last_total, closed_deals, algo_params, index, info):
+def do_transaction(stock, flip, reason, money, last_total, closed_deals, algo_params, index, info, dry_run):
 	buy  = float(stock['buy_series'][-1:])
 	sell = float(stock['sell_series'][-1:])
 
@@ -154,7 +115,9 @@ def do_transaction(stock, flip, reason, money, last_total, closed_deals, algo_pa
 		
 		if(info):
 			print("ACTION: BUY ", stock['name'], stock['stocks'], stock['last_buy'])
-		#execute_buy_order_online(stock)
+
+		if(not dry_run):
+			online.execute_buy_order_online(stock)
 
 	# sell
 	if(stock['active_position'] and (flip == -1)):
@@ -167,77 +130,17 @@ def do_transaction(stock, flip, reason, money, last_total, closed_deals, algo_pa
 		if(info):
 			print("ACTION: SELL", stock['name'], stock['stocks'], buy, reason, "result", round(float(closed_deals[-1]), 2) , "total", round(last_total, 2))
 		
-		##################################################
-		#  real online ONLY for 'sell-away' mode for now #
-		##################################################
-		if(stock['transaction_type'] == 'sell_away'):
-			execute_sell_order_online(stock)
-		
+		if(not dry_run):
+			online.execute_sell_order_online(stock)
+
 		stock['stocks'] = 0
 
 		if(stock['transaction_type'] == 'sell_away'):
 			print("sell_away completed, exit")
-			logout(stock)
+			online.logout(stock)
 			quit()
 
 	return money, last_total
-
-def get_stock_values_backtest(stock, index, backtest_data):
-	stock['valid'] = True
-
-	# Backtest data from stored files
-	if(stock['type'] == 'long'):
-		stock['buy_series'][index] = backtest_data[index][0]
-		stock['sell_series'][index] = backtest_data[index][1] 
-	if(stock['type'] == 'short'):
-		stock['buy_series'][index] = backtest_data[index][2]
-		stock['sell_series'][index] = backtest_data[index][3] 
-	
-	# sanity checks
-	if((stock['buy_series'][index] == 0)):
-		print(stock['name'], "buy read zero, copy last")
-		stock['valid'] = False
-		if(index > 0):
-			stock['buy_series'][index]  = stock['buy_series'][index - 1]
-	if((stock['sell_series'][index] == 0)):
-		stock['valid'] = False
-		print(stock['name'], "sell read zero, copy last")
-		if(index > 0):
-			stock['sell_series'][index] = stock['sell_series'][index - 1]
-	if((stock['sell_series'][index] - stock['buy_series'][index]) > stock['spread']):
-		stock['valid'] = False
-		if(index > 0):
-			print(stock['name'], "spread too big, copy last")
-			stock['buy_series'][index]  = stock['buy_series'][index - 1]
-			stock['sell_series'][index] = stock['sell_series'][index - 1]
-
-
-
-def get_stock_values_live(stock, index):
-
-	stock['valid'] = True
-
-	# Live data from from Nordnet
-	stock['buy_series'][index]  = float(stock['browser'].find_element(By.XPATH, '//*[@id="main-content"]/div[1]/div[2]/div/div[1]/div[1]/div/div[4]/div/span[2]/span/span[2]').text.replace(',','.'))
-	stock['sell_series'][index] = float(stock['browser'].find_element(By.XPATH, '//*[@id="main-content"]/div[1]/div[2]/div/div[1]/div[1]/div/div[5]/div/span[2]/span/span[2]').text.replace(',','.'))
-	
-	# sanity checks
-	if((stock['buy_series'][index] == 0)):
-		print(stock['name'], "buy read zero, copy last")
-		stock['valid'] = False
-		if(index > 0):
-			stock['buy_series'][index]  = stock['buy_series'][index - 1]
-	if((stock['sell_series'][index] == 0)):
-		stock['valid'] = False
-		print(stock['name'], "sell read zero, copy last")
-		if(index > 0):
-			stock['sell_series'][index] = stock['sell_series'][index - 1]
-	if((stock['sell_series'][index] - stock['buy_series'][index]) > stock['spread']):
-		stock['valid'] = False
-		if(index > 0):
-			print(stock['name'], "spread too big, copy last")
-			stock['buy_series'][index]  = stock['buy_series'][index - 1]
-			stock['sell_series'][index] = stock['sell_series'][index - 1]
 
 
 def store_stock_values(stocks, index, file):
@@ -259,32 +162,16 @@ def store_stock_values(stocks, index, file):
 		f.close()
 
 
-def login(stock, creds):
-	print("Login")
-	stock['browser'] = webdriver.Chrome()
-	stock['browser'].get('https://classic.nordnet.fi/mux/login/startFI.html')
-	username = WebDriverWait(stock['browser'], 10).until(EC.presence_of_element_located((By.ID, 'username')))
-	username.send_keys(creds['username'])
-	password = WebDriverWait(stock['browser'], 10).until(EC.presence_of_element_located((By.ID, 'password')))
-	password.send_keys(creds['password'])
-	nextButton = stock['browser'].find_element_by_class_name('button')
-	nextButton.click()
-	time.sleep(1)
-	stock['browser'].get(stock['url'])
-	print(stock['name'], stock['url'])
-
-def logout(stock):
-	stock['browser'].close()
-
 
 def check_args(argv):
 	inputfile = ''
 	outputfile = 'guru99.txt'
 	do_graph = False
 	do_actions = False
+	dry_run = False
 
 	try:
-		opts, args = getopt.getopt(argv[1:],"hgai:o:")
+		opts, args = getopt.getopt(argv[1:],"hgdai:o:", ["dry-run"])
 	except getopt.GetoptError:
 		print 'test.py -i <inputfile> -o <outputfile>'
 		sys.exit(2)
@@ -300,9 +187,11 @@ def check_args(argv):
 			do_graph = True
 		elif opt in ("-a"):
 			do_actions = True
+		elif opt in ("-d", "--dry-run"):
+			dry_run = True
 
 	if(inputfile == ''):
 			print argv[0], '-i <inputfile> -o <outputfile>'
 			sys.exit()
 
-	return inputfile, outputfile, do_graph, do_actions
+	return dry_run, inputfile, outputfile, do_graph, do_actions
