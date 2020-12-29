@@ -27,7 +27,6 @@ def get_backtest_files(folder_path, file_name):
 
 def get_backtest_data(file):
 	backtest_data = []
-	print("Open backtest file", file)
 	with open(file, "rb") as fp:
 		for i in fp.readlines():
 			tmp = i.replace('(','')
@@ -42,7 +41,7 @@ def get_backtest_data(file):
 		fp.close()
 
 	entries = len(backtest_data)
-	print(file, entries)
+	print("open backtest file", file, entries)
 	return backtest_data, entries
 
 	
@@ -51,24 +50,20 @@ def get_backtest_data(file):
 #					prog start						  #
 ###################################################################################################
 filenames = []
-file_index = 0
-best_total = 0
-param_set_index = 0
+file_index, best_total, param_set_index = 0, 0, 0
 
 dry_run, i_file, o_file, do_graph, do_actions = common.check_args(sys.argv)
 dry_run = True
 
-backtest_params = algo.get_backtest_params()
-
-a = algo.init()
 s = settings.init('settings_backtester.json')
+alg = algo.init()
 
-if(s['set_params']):
-	a = algo.set_new_params(a, 0)
+if(s['cycle_params']):
+	alg = algo.set_new_params(alg, 0)
 	param_set_index = param_set_index + 1
 
 if(s['randomize']):
-	a = algo.randomize_params(a)
+	alg = algo.randomize_params(alg)
 
 if(do_graph):
 	graph.init()
@@ -77,12 +72,10 @@ if(do_graph):
 filenames = get_backtest_files(s['file_dir'], s['file_name'])
 
 while(True):
-	stocks = common.init_stocks(a, i_file)
 	closed_deals = []
 	money_series = pd.Series([])
-	index = 0
-	money = 0
-	last_total = 0
+	index, money, last_total = 0, 0, 0
+	stocks = common.init_stocks(alg, i_file)
 
 	if(file_index < len(filenames)):
 		backtest_data, entries = get_backtest_data(filenames[file_index])
@@ -92,11 +85,11 @@ while(True):
 			quit()
 		
 		if(s['randomize']):
-			a = algo.randomize_params(a)
+			alg = algo.randomize_params(alg)
 		
-		if(s['set_params']):
-			if(param_set_index < len(backtest_params)):
-				a = algo.set_new_params(a, param_set_index)
+		if(s['cycle_params']):
+			if(param_set_index < len(algo.get_backtest_params())):
+				alg = algo.set_new_params(alg, param_set_index)
 				param_set_index = param_set_index + 1
 			else:
 				quit()
@@ -106,7 +99,9 @@ while(True):
 
 	# Run for one day in backtesting
 	while(index < entries):
-		money_series[index] = money
+		
+		if(do_graph):
+			money_series[index] = money
 
 		# data from backtest files
 		for stock in stocks:
@@ -115,7 +110,7 @@ while(True):
 		# check signals, do transactions
 		for stock in stocks:
 			is_last = (index == (entries - 1))
-			flip, reason = algo.check_signals(stock, index, a, is_last)
+			flip, reason = algo.check_signals(stock, index, alg, is_last)
 
 			if(flip != 0):
 				money, last_total = common.do_transaction(stock,
@@ -124,7 +119,7 @@ while(True):
 									  money,
 									  last_total,
 									  closed_deals,
-									  a,
+									  alg,
 									  index,
 									  do_actions,
 									  dry_run)
@@ -136,7 +131,7 @@ while(True):
 		index = index + 1
 
 	last_run = file_index == len(filenames)
-	best_total = common.count_stats(last_run, stocks, last_total, best_total, closed_deals, a)
+	best_total = common.count_stats(last_run, stocks, last_total, best_total, closed_deals, alg)
 
 	if(last_run and s['one_shot']):
 		print("Pausing...")

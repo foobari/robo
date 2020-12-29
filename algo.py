@@ -1,5 +1,6 @@
 from collections import OrderedDict
 import random
+import math
 
 def set_new_params(p, index):
 	bp = get_backtest_params()
@@ -13,23 +14,17 @@ def set_new_params(p, index):
 	return p
 
 def randomize_params(p):
-	p['cci_up'] 	=  random.uniform(284-10, 284+10)
-	p['cci_down'] 	=  random.uniform(-124-10, -124+10)
-	p['target'] 	=  random.uniform(0.979-0.10, 0.979+0.10)
-	p['hard'] 	=  random.uniform(-0.416-0.10, -0.416+0.10)
-	p['trailing'] 	=  random.uniform(-0.557-0.10, -0.557+0.10)
-	p['cci_window'] =  int(random.uniform(90, 110))
+	p['cci_up'] 	=  random.uniform( 150,  200)
+	p['cci_down'] 	=  random.uniform(-180, -140)
+	p['target'] 	=  random.uniform( 0.500,  1.000)
+	p['hard'] 	=  random.uniform(-0.500, -0.100)
+	p['trailing'] 	=  random.uniform(-0.500, -0.200)
+	p['cci_window'] =  int(random.uniform(62, 102))
 	print("randomized")
 	return p
 
 def init():
-	p = OrderedDict()
-	p['cci_up'] 	=  284.568471
-	p['cci_down'] 	= -124.732507
-	p['target'] 	=   0.979095  # target stop for dax to move +x %
-	p['hard'] 	=  -0.416562 #-0.16027  # hard stop-loss if entry dax comes down x %
-	p['trailing'] 	=  -0.557422  # trailing stop-loss if in active position dax comes down x % from current top
-	p['cci_window'] =  100
+	p = set_new_params(OrderedDict(), 0)
 	return p
 
 
@@ -38,10 +33,12 @@ def get_backtest_params():
 	# 	cci_up   	cci_down 	target		hard		trailing 	cci_window
 	backtest_params = (
 		# 5d tests
-		(293.421375,	-120.987870,	1.052508,	-0.338324,	-0.470415,	101), #v0.1.1 5d sharpe = 1.79 / 7.52%
-		(284.568471,	-124.732507,	0.979095,	-0.416562,	-0.557422,	100), #v0.1.0 5d sharpe = 1.78 / 7.25%
-		(286.271007,	-141.609216,	1.150073,	-0.396210,	-0.506074,	100), #       5d sharpe = 1.97
-		(212.259167,	-255.610183,	0.843542,	-0.686087,	-0.400189,	242), #       5d sharpe = 1.42 / 237e
+		(179.5546800,	-162.723594,	0.8,		-0.4,		-0.5,		 82), #v0.2.0 new_cci, sharpe = 1.88
+		#(100,		-100,		0.8,		-0.4,		-0.5,		 40), #modified cci test
+		#(284.568471,	-124.732507,	0.979095,	-0.416562,	-0.557422,	100), #v0.1.0 5d sharpe = 1.78 / 7.25%
+		#(293.421375,	-120.987870,	1.052508,	-0.338324,	-0.470415,	101), #v0.1.1 5d sharpe = 1.79 / 7.52%
+		#(286.271007,	-141.609216,	1.150073,	-0.396210,	-0.506074,	100), #       5d sharpe = 1.97
+		#(212.259167,	-255.610183,	0.843542,	-0.686087,	-0.400189,	242), #       5d sharpe = 1.42 / 237e
 
 	)
 	return backtest_params
@@ -51,6 +48,7 @@ def check_signals(stock, index, algo_params, is_last):
 	SMA_LONG =  200
 
 	flip = 0
+	reason = ""
 
 	buy  = float(stock['buy_series'][-1:])
 	sell = float(stock['sell_series'][-1:])
@@ -58,10 +56,8 @@ def check_signals(stock, index, algo_params, is_last):
 	stock['sma_series_short'] = stock['buy_series'].rolling(SMA_SHORT, min_periods=0).mean()
 	stock['sma_series_long']  = stock['buy_series'].rolling(SMA_LONG,  min_periods=0).mean()
 
-	reason = ""
-
 	# enter/exit cci
-	if(True):
+	if(True and not is_last):
 		p_max = (float(stock['sell_series'][-algo_params['cci_window']:-1].max()))
 		p_min = (float(stock['sell_series'][-algo_params['cci_window']:-1].min()))
 		p_clo = (float(stock['sell_series'][-1:]))
@@ -69,18 +65,30 @@ def check_signals(stock, index, algo_params, is_last):
 		stock['cci_ptyp'][index] = p_typ
 		p_sma = stock['cci_ptyp'].rolling(algo_params['cci_window'], min_periods=0).mean()
 		p_std = stock['cci_ptyp'].rolling(algo_params['cci_window'], min_periods=0).std()
+
 		if(float(p_std[-1:]) != 0):
 			sma = float(p_sma[-1:])
 			std = float(p_std[-1:])
 			stock['cci_last'] = (p_typ - sma) / std / 0.015
 			stock['cci_series'][index] = stock['cci_last']
 			
-			if(not stock['active_position'] and (stock['cci_last'] > algo_params['cci_up'])):
-				flip = 1
-			if(stock['active_position'] and (stock['cci_last'] < algo_params['cci_down']) and buy > stock['last_buy']):
-			#if(stock['active_position'] and (stock['cci_last'] < algo_params['cci_down'])):
-				reason = "cci_down"
-				flip = -1
+			if(not stock['active_position'] and index > SMA_SHORT):
+				if(buy > float(stock['sma_series_long'][-1:]) and
+				   stock['cci_series'][index-1] < algo_params['cci_down'] and
+				   stock['cci_series'][index] >= algo_params['cci_down']):
+					reason = "cci_buy"
+					flip = 1
+
+			if(stock['active_position'] and index > 50):
+				if(buy < float(stock['sma_series_long'][-1:]) and
+				   stock['cci_series'][index-1] > algo_params['cci_up'] and
+				   stock['cci_series'][index] <= algo_params['cci_up']):
+					reason = "cci_sell"
+					flip = -1
+
+		else:
+			stock['cci_series'][index] = stock['cci_series'][index-1]
+
 
 	# exit SMA flips
 	if(False):

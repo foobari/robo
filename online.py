@@ -92,6 +92,19 @@ def get_stock_values(stock, index, backtest_data=None):
 
 	stock_sanity_check(stock,index)	
 
+def mytry(stock, backtest_data, entries):
+	data1 = []
+	data2 = []
+	for x in range(entries):
+		if(stock['type'] == 'long'):
+			data1.append(backtest_data[x][0])
+			data2.append(backtest_data[x][1])
+		if(stock['type'] == 'short'):
+			data1.append(backtest_data[x][2])
+			data2.append(backtest_data[x][3])
+	
+	stock['buy_series']  = pd.DataFrame(data1)
+	stock['sell_series'] = pd.DataFrame(data2)
 
 def login(stock, creds):
 	print("Login")

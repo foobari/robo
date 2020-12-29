@@ -25,17 +25,17 @@ import settings
 import online
 
 
-###################################################################################################
-#					prog start						  #
-###################################################################################################
-file_index = 0
-best_total = 0
-
+index, money, last_total, best_total = 0, 0, 0, 0
+entries = 4320
+closed_deals = []	
+money_series = pd.Series([])
+ 
 dry_run, i_file, o_file, do_graph, do_actions = common.check_args(sys.argv)
 
-
-a = algo.init()
-s = settings.init('settings_robo.json')
+alg  	= algo.init()
+print alg
+sett 	= settings.init('settings_robo.json')
+stocks 	= common.init_stocks(alg, i_file)
 
 with open('credentials.json', 'r') as f:
 	creds = json.load(f)
@@ -43,64 +43,55 @@ with open('credentials.json', 'r') as f:
 if(do_graph):
 	graph.init()
 
-while(True):
-	stocks = common.init_stocks(a, i_file)
-	closed_deals = []
-	money_series = pd.Series([])
-	index = 0
-	money = 0
-	last_total = 0
+# Here we go, login to Nordnet
+for stock in stocks:
+	online.login(stock, creds)
 
-	entries = 4320
+#############################################
+# Run for one day max in live trading
+#
+while(index < entries):
+	money_series[index] = money
 
-	# Here we go, login to Nordnet
-	for stock in stocks:
-		online.login(stock, creds)
-
-	# Run for one day max in live trading
-	while(index < entries):
-		money_series[index] = money
-
-		# live data from Nordnet
-		try:
-			for stock in stocks:
-				online.get_stock_values(stock, index)
-		except:
-			print("Error fetching data")
-			time.sleep(s['wait_fetching_secs'])
-			continue
-		
-		# store to file
-		common.store_stock_values(stocks, index, o_file)
-
-		# check signals, do transactions
+	# live data from Nordnet
+	try:
 		for stock in stocks:
-			is_last = False
-			flip, reason = algo.check_signals(stock, index, a, is_last)
-
-			if(flip != 0):
-				money, last_total = common.do_transaction(stock,
-									  flip,
-									  reason,
-									  money,
-									  last_total,
-									  closed_deals,
-									  a,
-									  index,
-									  do_actions,
-									  dry_run)
-
-		# graph
-		if(do_graph and (index % s['graph_update_interval'] == 0)):
-			graph.draw(stocks, money_series)
-
-		# re-login after ~every hour
-		if(((index+1) % 300) == 0):
-			for stock in stocks:
-				online.logout(stock)
-				online.login(stock, creds)
-
+			online.get_stock_values(stock, index)
+	except:
+		print("Error fetching data")
 		time.sleep(s['wait_fetching_secs'])
-		index = index + 1
+		continue
+	
+	# store to file
+	common.store_stock_values(stocks, index, o_file)
 
-	best_total = common.count_stats(True, stocks, last_total, best_total, closed_deals, a)
+	# check signals, do transactions
+	for stock in stocks:
+		is_last = False
+		flip, reason = algo.check_signals(stock, index, alg, is_last)
+
+		if(flip != 0):
+			money, last_total = common.do_transaction(stock,
+									flip,
+									reason,
+									money,
+									last_total,
+									closed_deals,
+									alg,
+									index,
+									do_actions,
+									dry_run)
+	# graph
+	if(do_graph and (index % sett['graph_update_interval'] == 0)):
+		graph.draw(stocks, money_series)
+
+	# re-login after ~every hour
+	if(((index+1) % 300) == 0):
+		for stock in stocks:
+			online.logout(stock)
+			online.login(stock, creds)
+
+	time.sleep(sett['wait_fetching_secs'])
+	index = index + 1
+
+best_total = common.count_stats(True, stocks, last_total, best_total, closed_deals, alg)

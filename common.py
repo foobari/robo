@@ -22,7 +22,7 @@ stats['profitability'] = 0
 stats['profit_factor'] = 0
 
 def init_stocks(algo_params, file):
-	print("Open stocks file", file)
+	print("open stocks file", file)
 	with open(file, 'r') as f:
 		stocks = json.load(f)
 
@@ -86,7 +86,10 @@ def count_stats(final, stocks, last_total, best_total, closed_deals, algo_params
 	if(final):
 		stats = calc_stats(g_closed_deals)
 		print("---------------------------")
-		print("T:", round(best_total, 2), len(g_closed_deals), round(stats['sharpe'], 2), round(stats['profitability'], 2), round(stats['profit_factor'], 2), algo_params)
+		if(stats['sharpe'] > 1):
+			print("TG:", round(best_total, 2), len(g_closed_deals), round(stats['sharpe'], 2), round(stats['profitability'], 2), round(stats['profit_factor'], 2), algo_params)
+		else:
+			print("T: ", round(best_total, 2), len(g_closed_deals), round(stats['sharpe'], 2), round(stats['profitability'], 2), round(stats['profit_factor'], 2), algo_params)
 		print
 		del g_closed_deals[:]
 		first_time = True
@@ -114,7 +117,7 @@ def do_transaction(stock, flip, reason, money, last_total, closed_deals, algo_pa
 			stock['stocks'] = stock['transaction_size']
 		
 		if(info):
-			print("ACTION: BUY ", stock['name'], stock['stocks'], stock['last_buy'])
+			print("ACTION: BUY ", stock['name'], stock['stocks'], stock['last_buy'], reason)
 
 		if(not dry_run):
 			online.execute_buy_order_online(stock)

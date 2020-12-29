@@ -4,7 +4,7 @@ settings = []
 
 def init(filename):
 	global settings
-	print("Open settings file", filename)
+	print("open settings file", filename)
 	with open(filename, 'r') as f:
 		settings = json.load(f)
 	return settings

@@ -52,7 +52,9 @@ def draw_money(money):
 def draw(stocks, money):
 	for stock in stocks:
 		draw_stocks(stock)
-	draw_money(money)
+		if(stock['type'] == 'long'):
+			draw_money(stock['cci_series'])
+	#draw_money(money)
 	plt.draw()
 	plt.pause(0.0001)
 
