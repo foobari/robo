@@ -11,6 +11,7 @@ import json
 import pandas as pd
 import getopt
 import sys
+from datetime import datetime
 
 import settings
 import online
@@ -68,6 +69,10 @@ def calc_stats(closed_deals):
 			stats['profit_factor'] = profits_sum/losses_sum
 		else:
 			stats['profit_factor'] = 100
+	else:
+		stats['sharpe']        = 0
+		stats['profit_factor'] = 0
+		stats['profitability'] = 0
 
 	return stats
 
@@ -86,7 +91,7 @@ def count_stats(final, stocks, last_total, best_total, closed_deals, algo_params
 	if(final):
 		stats = calc_stats(g_closed_deals)
 		print("---------------------------")
-		if(stats['sharpe'] > 1):
+		if(stats['sharpe'] > 1.5):
 			print("TG:", round(best_total, 2), len(g_closed_deals), round(stats['sharpe'], 2), round(stats['profitability'], 2), round(stats['profit_factor'], 2), algo_params)
 		else:
 			print("T: ", round(best_total, 2), len(g_closed_deals), round(stats['sharpe'], 2), round(stats['profitability'], 2), round(stats['profit_factor'], 2), algo_params)
@@ -117,7 +122,7 @@ def do_transaction(stock, flip, reason, money, last_total, closed_deals, algo_pa
 			stock['stocks'] = stock['transaction_size']
 		
 		if(info):
-			print("ACTION: BUY ", stock['name'], stock['stocks'], stock['last_buy'], reason)
+			print(datetime.now().strftime("%H:%M:%S"), "ACTION: BUY ", stock['name'], stock['stocks'], stock['last_buy'], reason)
 
 		if(not dry_run):
 			online.execute_buy_order_online(stock)
@@ -131,7 +136,7 @@ def do_transaction(stock, flip, reason, money, last_total, closed_deals, algo_pa
 		stock['active_position'] = False
 		stock['signals_list_sell'].append((index, float(stock['buy_series'][-1:])))
 		if(info):
-			print("ACTION: SELL", stock['name'], stock['stocks'], buy, reason, "result", round(float(closed_deals[-1]), 2) , "total", round(last_total, 2))
+			print(datetime.now().strftime("%H:%M:%S"), "ACTION: SELL", stock['name'], stock['stocks'], buy, reason, "result", round(float(closed_deals[-1]), 2) , "total", round(last_total, 2))
 		
 		if(not dry_run):
 			online.execute_sell_order_online(stock)

@@ -9,7 +9,8 @@ import pandas_datareader as web
 import numpy as np
 import math
 import os,glob
-import json 
+import json
+from datetime import datetime
 
 import pdb
 from selenium import webdriver
@@ -24,9 +25,13 @@ import common
 import settings
 import online
 
-
 index, money, last_total, best_total = 0, 0, 0, 0
-entries = 4320
+
+while(datetime.now() < datetime.now().replace(hour = 9, minute = 16)):
+	print("waiting to start...")
+	time.sleep(10)
+
+
 closed_deals = []	
 money_series = pd.Series([])
  
@@ -67,7 +72,8 @@ while(index < entries):
 
 	# check signals, do transactions
 	for stock in stocks:
-		is_last = False
+		is_last = datetime.now() > datetime.now().replace(hour = 20, minute = 59)
+
 		flip, reason = algo.check_signals(stock, index, alg, is_last)
 
 		if(flip != 0):

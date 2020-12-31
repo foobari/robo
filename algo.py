@@ -1,6 +1,8 @@
 from collections import OrderedDict
 import random
 import math
+import numpy as np
+import scipy
 
 def set_new_params(p, index):
 	bp = get_backtest_params()
@@ -10,16 +12,18 @@ def set_new_params(p, index):
 	p['hard'] 	= bp[index][3]
 	p['trailing'] 	= bp[index][4]
 	p['cci_window']	= bp[index][5]
+	p['sma_len']	= bp[index][6]
 	print("parametrized set", index)
 	return p
 
 def randomize_params(p):
-	p['cci_up'] 	=  random.uniform( 150,  200)
-	p['cci_down'] 	=  random.uniform(-180, -140)
-	p['target'] 	=  random.uniform( 0.500,  1.000)
-	p['hard'] 	=  random.uniform(-0.500, -0.100)
-	p['trailing'] 	=  random.uniform(-0.500, -0.200)
-	p['cci_window'] =  int(random.uniform(62, 102))
+	p['cci_up'] 	=  random.uniform( 170,  210)
+	p['cci_down'] 	=  random.uniform(-163, -143)
+	p['target'] 	=  random.uniform( 0.400,  0.900)
+	p['hard'] 	=  random.uniform(-0.570, -0.370)
+	p['trailing'] 	=  random.uniform(-0.380, -0.180)
+	p['cci_window'] =  int(random.uniform(71, 91))
+	p['sma_len'] 	=  int(random.uniform(180, 220)) #200
 	print("randomized")
 	return p
 
@@ -28,24 +32,27 @@ def init():
 	return p
 
 
-
 def get_backtest_params():
-	# 	cci_up   	cci_down 	target		hard		trailing 	cci_window
+	# 	cci_up   	cci_down 	target		hard		trailing 	cci_w	sma_len
 	backtest_params = (
 		# 5d tests
-		(179.5546800,	-162.723594,	0.8,		-0.4,		-0.5,		 82), #v0.2.0 new_cci, sharpe = 1.88
+		(181.53411,	-153.65132, 	0.78219,	-0.46444,	-0.35691,	 81,	200), #temp
+		(180.26122,	-153.15132,	0.88069,	-0.47235,	-0.28211,	 81,	202), # 8d sh=1.63 / 5.34%/d -> 1st try (213.5e)
+		(198.72637,	-176.73968,	0.43072,	-0.46735,	-0.63427,	 87,	200), # 8d sh=2.96 / 3.19%/d -> 2nd try
+
+		#(202.0436609,	-167.130678,	0.518,		-0.407697,	-0.611367,	 85,	200), #v0.2.0 sharpe = 2.14 / +3.2%d
+		#(179.5546800,	-162.723594,	0.8,		-0.4,		-0.5,		 82,	200), #v0.2.0 new_cci, sharpe = 1.88
 		#(100,		-100,		0.8,		-0.4,		-0.5,		 40), #modified cci test
 		#(284.568471,	-124.732507,	0.979095,	-0.416562,	-0.557422,	100), #v0.1.0 5d sharpe = 1.78 / 7.25%
 		#(293.421375,	-120.987870,	1.052508,	-0.338324,	-0.470415,	101), #v0.1.1 5d sharpe = 1.79 / 7.52%
 		#(286.271007,	-141.609216,	1.150073,	-0.396210,	-0.506074,	100), #       5d sharpe = 1.97
 		#(212.259167,	-255.610183,	0.843542,	-0.686087,	-0.400189,	242), #       5d sharpe = 1.42 / 237e
-
 	)
 	return backtest_params
 
 def check_signals(stock, index, algo_params, is_last):
 	SMA_SHORT = 40
-	SMA_LONG =  200
+	SMA_LONG = algo_params['sma_len']
 
 	flip = 0
 	reason = ""
@@ -72,22 +79,35 @@ def check_signals(stock, index, algo_params, is_last):
 			stock['cci_last'] = (p_typ - sma) / std / 0.015
 			stock['cci_series'][index] = stock['cci_last']
 			
-			if(not stock['active_position'] and index > SMA_SHORT):
-				if(buy > float(stock['sma_series_long'][-1:]) and
-				   stock['cci_series'][index-1] < algo_params['cci_down'] and
-				   stock['cci_series'][index] >= algo_params['cci_down']):
-					reason = "cci_buy"
-					flip = 1
+			if(index > SMA_SHORT):
+				if(not stock['active_position']):
+					if(buy > float(stock['sma_series_long'][-1:]) and
+					   stock['cci_series'][index-1] < algo_params['cci_down'] and
+					   stock['cci_series'][index] >= algo_params['cci_down']):
+						reason = "cci_buy"
+						flip = 1
 
-			if(stock['active_position'] and index > 50):
-				if(buy < float(stock['sma_series_long'][-1:]) and
-				   stock['cci_series'][index-1] > algo_params['cci_up'] and
-				   stock['cci_series'][index] <= algo_params['cci_up']):
-					reason = "cci_sell"
-					flip = -1
+				if(stock['active_position']):
+					if(buy < float(stock['sma_series_long'][-1:]) and
+					   stock['cci_series'][index-1] > algo_params['cci_up'] and
+					   stock['cci_series'][index] <= algo_params['cci_up']):
+						reason = "cci_sell"
+						flip = -1
 
+				# blips
+				'''
+				if(buy > float(stock['sma_series_short'][-1:]) and
+					stock['cci_series'][index-1] < algo_params['cci_down'] and  stock['cci_series'][index] >= algo_params['cci_down']):
+						print("blip up", sell)
+						stock['signals_list_buy'].append((index, float(stock['sell_series'][-1:])))
+				if(buy < float(stock['sma_series_short'][-1:]) and
+					stock['cci_series'][index-1] > algo_params['cci_up'] and stock['cci_series'][index] <= algo_params['cci_up']):
+						print("blip down", buy)
+						stock['signals_list_sell'].append((index, float(stock['buy_series'][-1:])))
+				'''
 		else:
 			stock['cci_series'][index] = stock['cci_series'][index-1]
+		
 
 
 	# exit SMA flips
