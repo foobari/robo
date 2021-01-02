@@ -1,10 +1,18 @@
+v0.2.1
+------
+sma_len parametrized
+
+%day	deals/d	sharpe	prfbtl	prf_f	cci_up		cc_down		target		hard		trailing	cci_w	sma_len
++6.04%	1.25	2.52	0.90	81.50	181.53411,	-155.60905,	0.97391,	-0.46445,	-0.35692,	 78,	195
+
+
 v0.2.0
 ------
 new cci_algo
 -entrys trigger by breaking up from below cci_down line and
 -price is above long sma
 
-%day	deals/d	sharpe	prfbtl	prf_f	cci_up		cc_down		target		hard		trailing	cci_window
+%day	deals/d	sharpe	prfbtl	prf_f	cci_up		cc_down		target		hard		trailing	cci_w
 +3.2%	1.14	2.14	0.75	13.78	202.0436609350, -167.130678951, 0.518955747140, -0.40769748881, -0.61136763935, 85
 +4.5%	1.86	1.42	0.62	 2.84	151.3750893428, -133.210906124, 0.739256327792,	-0.31678375913,	-0.65723563213, 80
 

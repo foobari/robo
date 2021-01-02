@@ -17,13 +17,13 @@ def set_new_params(p, index):
 	return p
 
 def randomize_params(p):
-	p['cci_up'] 	=  random.uniform( 170,  210)
-	p['cci_down'] 	=  random.uniform(-163, -143)
-	p['target'] 	=  random.uniform( 0.400,  0.900)
-	p['hard'] 	=  random.uniform(-0.570, -0.370)
-	p['trailing'] 	=  random.uniform(-0.380, -0.180)
-	p['cci_window'] =  int(random.uniform(71, 91))
-	p['sma_len'] 	=  int(random.uniform(180, 220)) #200
+	#p['cci_up'] 	=  random.uniform( 196.5,  198.5)
+	#p['cci_down'] 	=  random.uniform(-180.8, -178.8)
+	#p['target'] 	=  random.uniform( 0.90,  2.00)
+	p['hard'] 	=  random.uniform(-1.0, -0.01)
+	#p['trailing'] 	=  random.uniform(-0.73, -0.53)
+	#p['cci_window'] =  int(random.uniform(80, 86))
+	#p['sma_len'] 	=  int(random.uniform(190, 210)) #200
 	print("randomized")
 	return p
 
@@ -36,10 +36,11 @@ def get_backtest_params():
 	# 	cci_up   	cci_down 	target		hard		trailing 	cci_w	sma_len
 	backtest_params = (
 		# 5d tests
-		(181.53411,	-153.65132, 	0.78219,	-0.46444,	-0.35691,	 81,	200), #temp
-		(180.26122,	-153.15132,	0.88069,	-0.47235,	-0.28211,	 81,	202), # 8d sh=1.63 / 5.34%/d -> 1st try (213.5e)
-		(198.72637,	-176.73968,	0.43072,	-0.46735,	-0.63427,	 87,	200), # 8d sh=2.96 / 3.19%/d -> 2nd try
-
+		(181.53411,	-155.60905,	0.97391,	-0.46445,	-0.35692,	 78,	195), # after testrun1 / target opt. sh=2.52 / 6.04%
+		(181.53411,	-155.60905,	0.78219,	-0.46445,	-0.35692,	 78,	195), # after testrun1 sh=2.27 / 5.59%
+		(197.54381,	-179.85561,	0.52458,	-0.43402,	-0.63594,	 83,	209), # after testrun2 sh=2.70 / 3.55%
+		(198.72637,	-176.73968,	0.43072,	-0.46735,	-0.63427,	 87,	200), # 8d sh=2.96 / 3.19%/d
+		(180.26122,	-153.15132,	0.88069,	-0.47235,	-0.28211,	 81,	202), # 8d sh=1.63 / 5.34%/d
 		#(202.0436609,	-167.130678,	0.518,		-0.407697,	-0.611367,	 85,	200), #v0.2.0 sharpe = 2.14 / +3.2%d
 		#(179.5546800,	-162.723594,	0.8,		-0.4,		-0.5,		 82,	200), #v0.2.0 new_cci, sharpe = 1.88
 		#(100,		-100,		0.8,		-0.4,		-0.5,		 40), #modified cci test
