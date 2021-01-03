@@ -5,6 +5,7 @@
 		"type": "short",
 		"leverage": 20,
 		"spread": 0.06,
+		"account": "1",
 		"transaction_type": "sell_away",
 		"active_position": true,
 		"last_buy": 3.20,

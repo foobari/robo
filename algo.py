@@ -20,10 +20,11 @@ def randomize_params(p):
 	#p['cci_up'] 	=  random.uniform( 196.5,  198.5)
 	#p['cci_down'] 	=  random.uniform(-180.8, -178.8)
 	#p['target'] 	=  random.uniform( 0.90,  2.00)
-	p['hard'] 	=  random.uniform(-1.0, -0.01)
-	#p['trailing'] 	=  random.uniform(-0.73, -0.53)
-	#p['cci_window'] =  int(random.uniform(80, 86))
+	#p['hard'] 	=  random.uniform(-1.0, -0.01)
+	#p['trailing'] 	=  random.uniform(-1.00, -0.01)
+	#p['cci_window'] =  int(random.uniform(58, 98))
 	#p['sma_len'] 	=  int(random.uniform(190, 210)) #200
+	p['sma_len'] = p['sma_len'] + 2
 	print("randomized")
 	return p
 
@@ -36,6 +37,8 @@ def get_backtest_params():
 	# 	cci_up   	cci_down 	target		hard		trailing 	cci_w	sma_len
 	backtest_params = (
 		# 5d tests
+		(181.53411,	-155.60905,	0.97391,	-0.46445,	-0.35692,	 82,	39), # 
+		(181.53411,	-155.60905,	0.97391,	-0.46445,	-0.35692,	 82,	195), # after testrun1 / cci_w opt.  sh=2.70 / 6.61%
 		(181.53411,	-155.60905,	0.97391,	-0.46445,	-0.35692,	 78,	195), # after testrun1 / target opt. sh=2.52 / 6.04%
 		(181.53411,	-155.60905,	0.78219,	-0.46445,	-0.35692,	 78,	195), # after testrun1 sh=2.27 / 5.59%
 		(197.54381,	-179.85561,	0.52458,	-0.43402,	-0.63594,	 83,	209), # after testrun2 sh=2.70 / 3.55%
@@ -94,18 +97,6 @@ def check_signals(stock, index, algo_params, is_last):
 					   stock['cci_series'][index] <= algo_params['cci_up']):
 						reason = "cci_sell"
 						flip = -1
-
-				# blips
-				'''
-				if(buy > float(stock['sma_series_short'][-1:]) and
-					stock['cci_series'][index-1] < algo_params['cci_down'] and  stock['cci_series'][index] >= algo_params['cci_down']):
-						print("blip up", sell)
-						stock['signals_list_buy'].append((index, float(stock['sell_series'][-1:])))
-				if(buy < float(stock['sma_series_short'][-1:]) and
-					stock['cci_series'][index-1] > algo_params['cci_up'] and stock['cci_series'][index] <= algo_params['cci_up']):
-						print("blip down", buy)
-						stock['signals_list_sell'].append((index, float(stock['buy_series'][-1:])))
-				'''
 		else:
 			stock['cci_series'][index] = stock['cci_series'][index-1]
 		
