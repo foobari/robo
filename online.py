@@ -24,6 +24,7 @@ def execute_buy_order_online(stock):
 	# quantity
 	amount = stock['stocks']
 	WebDriverWait(stock['browser'], 10).until(EC.presence_of_element_located((By.XPATH, '//*[@id="main-content"]/div[2]/div/div/div[3]/div/div/div/div[2]/div[1]/div[1]/div[2]/div/input'))).send_keys(str(amount))
+
 	# price
 	# price = 2.11
 	# WebDriverWait(stock['browser'], 10).until(EC.presence_of_element_located((By.XPATH, '//*[@id="main-content"]/div[2]/div/div/div[3]/div/div/div/div[2]/div[1]/div[2]/div[2]/div/input'))).send_keys(str(price))
@@ -96,19 +97,6 @@ def get_stock_values(stock, index, backtest_data=None):
 
 	stock_sanity_check(stock,index)	
 
-def mytry(stock, backtest_data, entries):
-	data1 = []
-	data2 = []
-	for x in range(entries):
-		if(stock['type'] == 'long'):
-			data1.append(backtest_data[x][0])
-			data2.append(backtest_data[x][1])
-		if(stock['type'] == 'short'):
-			data1.append(backtest_data[x][2])
-			data2.append(backtest_data[x][3])
-	
-	stock['buy_series']  = pd.DataFrame(data1)
-	stock['sell_series'] = pd.DataFrame(data2)
 
 def login(stock, creds):
 	print("Login")

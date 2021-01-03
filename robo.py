@@ -55,7 +55,7 @@ for stock in stocks:
 #############################################
 # Run for one day max in live trading
 #
-while(index < entries):
+while(True):
 	money_series[index] = money
 
 	# live data from Nordnet

@@ -5,7 +5,7 @@
 		"type": "long",
 		"leverage": 15,
 		"spread": 0.06,
-		"transaction_size": 150,
+		"transaction_size": 100,
 		"account": "2",
 		"transaction_type": "auto",
 		"active_position": false,
