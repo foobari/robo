@@ -4,6 +4,7 @@ import math
 import numpy as np
 import scipy
 
+
 def set_new_params(p, index):
 	bp = get_backtest_params()
 	p['cci_up'] 	= bp[index][0]
@@ -17,14 +18,13 @@ def set_new_params(p, index):
 	return p
 
 def randomize_params(p):
-	#p['cci_up'] 	=  random.uniform( 196.5,  198.5)
+	p['cci_up'] 	=  random.uniform( 150,  200)
 	#p['cci_down'] 	=  random.uniform(-180.8, -178.8)
 	#p['target'] 	=  random.uniform( 0.90,  2.00)
 	#p['hard'] 	=  random.uniform(-1.0, -0.01)
 	#p['trailing'] 	=  random.uniform(-1.00, -0.01)
 	#p['cci_window'] =  int(random.uniform(58, 98))
 	#p['sma_len'] 	=  int(random.uniform(190, 210)) #200
-	p['sma_len'] = p['sma_len'] + 2
 	print("randomized")
 	return p
 
@@ -37,7 +37,7 @@ def get_backtest_params():
 	# 	cci_up   	cci_down 	target		hard		trailing 	cci_w	sma_len
 	backtest_params = (
 		# 5d tests
-		(181.53411,	-155.60905,	0.97391,	-0.46445,	-0.35692,	 82,	39), # 
+		(181.53411,	-155.60905,	0.97391,	-0.46445,	-0.35692,	 82,	196), # after testrun1 / sma   opt.  sh=2.70 / 6.61%
 		(181.53411,	-155.60905,	0.97391,	-0.46445,	-0.35692,	 82,	195), # after testrun1 / cci_w opt.  sh=2.70 / 6.61%
 		(181.53411,	-155.60905,	0.97391,	-0.46445,	-0.35692,	 78,	195), # after testrun1 / target opt. sh=2.52 / 6.04%
 		(181.53411,	-155.60905,	0.78219,	-0.46445,	-0.35692,	 78,	195), # after testrun1 sh=2.27 / 5.59%
@@ -46,11 +46,7 @@ def get_backtest_params():
 		(180.26122,	-153.15132,	0.88069,	-0.47235,	-0.28211,	 81,	202), # 8d sh=1.63 / 5.34%/d
 		#(202.0436609,	-167.130678,	0.518,		-0.407697,	-0.611367,	 85,	200), #v0.2.0 sharpe = 2.14 / +3.2%d
 		#(179.5546800,	-162.723594,	0.8,		-0.4,		-0.5,		 82,	200), #v0.2.0 new_cci, sharpe = 1.88
-		#(100,		-100,		0.8,		-0.4,		-0.5,		 40), #modified cci test
-		#(284.568471,	-124.732507,	0.979095,	-0.416562,	-0.557422,	100), #v0.1.0 5d sharpe = 1.78 / 7.25%
-		#(293.421375,	-120.987870,	1.052508,	-0.338324,	-0.470415,	101), #v0.1.1 5d sharpe = 1.79 / 7.52%
-		#(286.271007,	-141.609216,	1.150073,	-0.396210,	-0.506074,	100), #       5d sharpe = 1.97
-		#(212.259167,	-255.610183,	0.843542,	-0.686087,	-0.400189,	242), #       5d sharpe = 1.42 / 237e
+
 	)
 	return backtest_params
 
@@ -63,6 +59,10 @@ def check_signals(stock, index, algo_params, is_last):
 
 	buy  = float(stock['buy_series'][-1:])
 	sell = float(stock['sell_series'][-1:])
+
+	# calc budget, used in stats info at the end
+	if(stock['budget'] == 0):
+		stock['budget'] = stock['stocks'] * sell
 
 	stock['sma_series_short'] = stock['buy_series'].rolling(SMA_SHORT, min_periods=0).mean()
 	stock['sma_series_long']  = stock['buy_series'].rolling(SMA_LONG,  min_periods=0).mean()
