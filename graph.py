@@ -7,11 +7,14 @@ import math
 import os,glob
 import pdb
 
+import algo
+
 fig = plt.figure(figsize=(12,10))
 ax1 = fig.add_subplot(311)
 ax2 = fig.add_subplot(312)
 ax3 = fig.add_subplot(313)
 
+cci_u, cci_d = 0, 0
 
 def draw_stocks(stock):
 	global ax1, ax2
@@ -44,8 +47,13 @@ def draw_stocks(stock):
 
 def draw_money(money):
 	global ax3
+	global cci_u, cci_d
 	ax3.clear()	
-	ax3.plot(money, color="green", label = "Money")			
+	ax3.axhline(y= cci_u, color='r', label = "cci/bull", linestyle='dotted')
+	ax3.axhline(y= cci_d, color='r', linestyle='dotted')
+	ax3.axhline(y= -cci_d, color='b', label = "cci/bear", linestyle='dotted')
+	ax3.axhline(y= -cci_u, color='b', linestyle='dotted')
+	ax3.plot(money, color="green", label = "cci")			
 	ax3.legend(loc="upper left")
 
 
@@ -60,5 +68,10 @@ def draw(stocks, money):
 
 
 def init():
+	global cci_u, cci_d
+	
 	plt.ion()
+	bp = algo.get_backtest_params()
+	cci_u = bp[0][0]
+	cci_d = bp[0][1]
 

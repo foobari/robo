@@ -103,26 +103,24 @@ while(True):
 		if(do_graph):
 			money_series[index] = money
 
-		# data from backtest files
+		# check signals, do transactions
 		for stock in stocks:
 			online.get_stock_values(stock, index, backtest_data)
 
-		# check signals, do transactions
-		for stock in stocks:
 			is_last = (index == (entries - 1))
 			flip, reason = algo.check_signals(stock, index, alg, is_last)
 
 			if(flip != 0):
 				money, last_total = common.do_transaction(stock,
-									  flip,
-									  reason,
-									  money,
-									  last_total,
-									  closed_deals,
-									  alg,
-									  index,
-									  do_actions,
-									  dry_run)
+									flip,
+									reason,
+									money,
+									last_total,
+									closed_deals,
+									alg,
+									index,
+									do_actions,
+									dry_run)
 
 		# graph
 		if(do_graph and (index % s['graph_update_interval'] == 0)):

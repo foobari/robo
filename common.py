@@ -19,6 +19,7 @@ import online
 g_closed_deals = []
 stats = {}
 stats['sharpe'] = 0
+stats['days'] = 0
 stats['profitability'] = 0
 stats['profit_factor'] = 0
 stats['max_budget'] = 0
@@ -105,17 +106,21 @@ def count_stats(final, stocks, last_total, best_total, closed_deals, algo_params
 
 	print('{:.1%}'.format(result), round(this_budget, 2), round(last_total, 2), len(closed_deals), round(stats['sharpe'], 2), round(stats['profitability'], 2), round(stats['profit_factor'], 2))
 
+	stats['days'] = stats['days'] + 1
+
 	if(final):
 		stats = calc_stats(g_closed_deals)
 		print("---------------------------")
 		result = best_total / stats['max_budget']
+		result_d = result / stats['days']
 		if(stats['sharpe'] > 1.5):
-			print("TG:", '{:.1%}'.format(result), round(best_total, 2), len(g_closed_deals), round(stats['sharpe'], 2), round(stats['profitability'], 2), round(stats['profit_factor'], 2), algo_params)
+			print("TG:", '{:.1%}'.format(result_d), '{:.1%}'.format(result), round(best_total, 2), len(g_closed_deals), round(stats['sharpe'], 2), round(stats['profitability'], 2), round(stats['profit_factor'], 2), algo_params)
 		else:
-			print("T: ", '{:.1%}'.format(result), round(best_total, 2), len(g_closed_deals), round(stats['sharpe'], 2), round(stats['profitability'], 2), round(stats['profit_factor'], 2), algo_params)
+			print("T: ", '{:.1%}'.format(result_d), '{:.1%}'.format(result), round(best_total, 2), len(g_closed_deals), round(stats['sharpe'], 2), round(stats['profitability'], 2), round(stats['profit_factor'], 2), algo_params)
 		print
 		del g_closed_deals[:]
 		first_time = True
+		stats['days'] = 0
 
 	return best_total
 

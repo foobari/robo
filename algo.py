@@ -4,7 +4,6 @@ import math
 import numpy as np
 import scipy
 
-
 def set_new_params(p, index):
 	bp = get_backtest_params()
 	p['cci_up'] 	= bp[index][0]
@@ -18,13 +17,13 @@ def set_new_params(p, index):
 	return p
 
 def randomize_params(p):
-	p['cci_up'] 	=  random.uniform( 150,  200)
-	#p['cci_down'] 	=  random.uniform(-180.8, -178.8)
-	#p['target'] 	=  random.uniform( 0.90,  2.00)
-	#p['hard'] 	=  random.uniform(-1.0, -0.01)
+	p['cci_up'] 	=  random.uniform( 161,  211)
+	p['cci_down'] 	=  random.uniform(-173, -133)
+	#p['target'] 	=  random.uniform( 0.90,  1.10)
+	#p['hard'] 	=  random.uniform(-0.5, -0.4)
 	#p['trailing'] 	=  random.uniform(-1.00, -0.01)
-	#p['cci_window'] =  int(random.uniform(58, 98))
-	#p['sma_len'] 	=  int(random.uniform(190, 210)) #200
+	p['cci_window'] =  int(random.uniform(72, 92))
+	p['sma_len'] 	=  int(random.uniform(166, 226)) #200
 	print("randomized")
 	return p
 
@@ -37,14 +36,15 @@ def get_backtest_params():
 	# 	cci_up   	cci_down 	target		hard		trailing 	cci_w	sma_len
 	backtest_params = (
 		# 5d tests
-		(181.53411,	-155.60905,	0.97391,	-0.46445,	-0.35692,	 82,	196), # after testrun1 / sma   opt.  sh=2.70 / 6.61%
-		(181.53411,	-155.60905,	0.97391,	-0.46445,	-0.35692,	 82,	195), # after testrun1 / cci_w opt.  sh=2.70 / 6.61%
-		(181.53411,	-155.60905,	0.97391,	-0.46445,	-0.35692,	 78,	195), # after testrun1 / target opt. sh=2.52 / 6.04%
-		(181.53411,	-155.60905,	0.78219,	-0.46445,	-0.35692,	 78,	195), # after testrun1 sh=2.27 / 5.59%
-		(197.54381,	-179.85561,	0.52458,	-0.43402,	-0.63594,	 83,	209), # after testrun2 sh=2.70 / 3.55%
-		(198.72637,	-176.73968,	0.43072,	-0.46735,	-0.63427,	 87,	200), # 8d sh=2.96 / 3.19%/d
-		(180.26122,	-153.15132,	0.88069,	-0.47235,	-0.28211,	 81,	202), # 8d sh=1.63 / 5.34%/d
-		#(202.0436609,	-167.130678,	0.518,		-0.407697,	-0.611367,	 85,	200), #v0.2.0 sharpe = 2.14 / +3.2%d
+		(181.53411,	-153.87035,	0.97391,	-0.46445,	-0.35692,	 82,	196), # after testrun1 / cci_d opt.  sh=2.87 / 3.575%
+		(181.53411,	-155.60905,	0.97391,	-0.46445,	-0.35692,	 82,	196), # after testrun1 / sma   opt.  sh=2.70
+		(181.53411,	-155.60905,	0.97391,	-0.46445,	-0.35692,	 82,	195), # after testrun1 / cci_w opt.  sh=2.70
+		(181.53411,	-155.60905,	0.97391,	-0.46445,	-0.35692,	 78,	195), # after testrun1 / target opt. sh=2.52
+		(181.53411,	-155.60905,	0.78219,	-0.46445,	-0.35692,	 78,	195), # after testrun1 sh=2.27
+		(197.54381,	-179.85561,	0.52458,	-0.43402,	-0.63594,	 83,	209), # after testrun2 sh=2.70
+		(198.72637,	-176.73968,	0.43072,	-0.46735,	-0.63427,	 87,	200), # 8d sh=2.96
+		(180.26122,	-153.15132,	0.88069,	-0.47235,	-0.28211,	 81,	202), # 8d sh=1.63
+		#(202.0436609,	-167.130678,	0.518,		-0.407697,	-0.611367,	 85,	200), #v0.2.0 sharpe = 2.14
 		#(179.5546800,	-162.723594,	0.8,		-0.4,		-0.5,		 82,	200), #v0.2.0 new_cci, sharpe = 1.88
 
 	)

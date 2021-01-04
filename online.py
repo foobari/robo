@@ -85,18 +85,26 @@ def get_stock_values(stock, index, backtest_data=None):
 	stock['valid'] = True
 
 	if(backtest_data == None):
-		stock['buy_series'][index]  = float(stock['browser'].find_element(By.XPATH, '//*[@id="main-content"]/div[1]/div[2]/div/div[1]/div[1]/div/div[4]/div/span[2]/span/span[2]').text.replace(',','.'))
-		stock['sell_series'][index] = float(stock['browser'].find_element(By.XPATH, '//*[@id="main-content"]/div[1]/div[2]/div/div[1]/div[1]/div/div[5]/div/span[2]/span/span[2]').text.replace(',','.'))
+		buy  = float(stock['browser'].find_element(By.XPATH, '//*[@id="main-content"]/div[1]/div[2]/div/div[1]/div[1]/div/div[4]/div/span[2]/span/span[2]').text.replace(',','.'))
+		sell = float(stock['browser'].find_element(By.XPATH, '//*[@id="main-content"]/div[1]/div[2]/div/div[1]/div[1]/div/div[5]/div/span[2]/span/span[2]').text.replace(',','.'))
+
+		if(index == 0 and (buy < 0.01 or sell < 0.01)):
+			raise Exception("First value zero")
+		stock['buy_series'][index]  = buy
+		stock['sell_series'][index] = sell
 	else:
 		if(stock['type'] == 'long'):
+			if(index == 0 and (backtest_data[index][0] < 0.01 or backtest_data[index][1] < 0.01)):
+				raise Exception("First value zero")
 			stock['buy_series'][index] = backtest_data[index][0]
 			stock['sell_series'][index] = backtest_data[index][1] 
 		if(stock['type'] == 'short'):
+			if(index == 0 and (backtest_data[index][2] < 0.01 or backtest_data[index][3] < 0.01)):
+				raise Exception("First value zero")
 			stock['buy_series'][index] = backtest_data[index][2]
 			stock['sell_series'][index] = backtest_data[index][3] 
 
-	stock_sanity_check(stock,index)	
-
+	stock_sanity_check(stock,index)
 
 def login(stock, creds):
 	print("Login")

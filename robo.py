@@ -27,8 +27,8 @@ import online
 
 index, money, last_total, best_total = 0, 0, 0, 0
 
-while(datetime.now() < datetime.now().replace(hour = 9, minute = 16)):
-	print("waiting to start...")
+while(datetime.now() < datetime.now().replace(hour = 9, minute = 15)):
+	print("waiting for Nordnet to open...")
 	time.sleep(10)
 
 
@@ -48,12 +48,12 @@ with open('credentials.json', 'r') as f:
 if(do_graph):
 	graph.init()
 
-# Here we go, login to Nordnet
+# here we go, login to Nordnet
 for stock in stocks:
 	online.login(stock, creds)
 
 #############################################
-# Run for one day max in live trading
+# run for one day max in live trading
 #
 while(True):
 	money_series[index] = money
@@ -64,7 +64,7 @@ while(True):
 			online.get_stock_values(stock, index)
 	except:
 		print("Error fetching data")
-		time.sleep(s['wait_fetching_secs'])
+		time.sleep(sett['wait_fetching_secs'])
 		continue
 	
 	# store to file
