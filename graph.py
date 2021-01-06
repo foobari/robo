@@ -35,7 +35,11 @@ def draw_stocks(stock):
 		ax.plot(x_val, y_val, 'g^')
 
 
-	ax.plot(stock['buy_series'], label = stock["name"])
+	if(stock['type'] == 'long'):
+		color = 'olivedrab'
+	else:
+		color = 'steelblue'
+	ax.plot(stock['buy_series'], color = color, label = stock["name"])
 	ax.plot(stock['sma_series_short'], label = "SMA_short", linestyle=':')
 	ax.plot(stock['sma_series_long'],  label = "SMA_long", linestyle=':')
 	ax.legend(loc="upper left")
@@ -45,24 +49,30 @@ def draw_stocks(stock):
 		color = 'red'
 	ax.text(0.01, 0.01, "cci: " + str(stock["cci_last"]), transform=ax.transAxes, color=color)
 
-def draw_money(money):
+def draw_cci(lng, shrt):
 	global ax3
 	global cci_u, cci_d
 	ax3.clear()	
-	ax3.axhline(y= cci_u, color='r', label = "cci/bull", linestyle='dotted')
-	ax3.axhline(y= cci_d, color='r', linestyle='dotted')
-	ax3.axhline(y= -cci_d, color='b', label = "cci/bear", linestyle='dotted')
-	ax3.axhline(y= -cci_u, color='b', linestyle='dotted')
-	ax3.plot(money, color="green", label = "cci")			
+	ax3.axhline(y=  cci_u, color='olivedrab', label = "limits (bull)", linestyle='dotted')
+	ax3.axhline(y=  cci_d, color='olivedrab', linestyle='dotted')
+	ax3.axhline(y= -cci_d, color='steelblue', label = "limits (bear)", linestyle='dotted')
+	ax3.axhline(y= -cci_u, color='steelblue', linestyle='dotted')
+	ax3.plot(lng,  color="olivedrab", label = "cci_series (bull)")
+	ax3.plot(shrt, color="steelblue", label = "cci_series (bear)")
 	ax3.legend(loc="upper left")
 
 
-def draw(stocks, money):
+def draw(stocks):
+	lng  = pd.Series([])
+	shrt = pd.Series([])
+
 	for stock in stocks:
 		draw_stocks(stock)
 		if(stock['type'] == 'long'):
-			draw_money(stock['cci_series'])
-	#draw_money(money)
+			lng  = stock['cci_series']
+		else:
+			shrt = stock['cci_series']
+	draw_cci(lng, shrt)	
 	plt.draw()
 	plt.pause(0.0001)
 

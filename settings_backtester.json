@@ -3,9 +3,9 @@
 	"stock_amount_to_buy": 100,
 	"money_per_transaction": 100,
 	"graph_update_interval": 10,
-	"randomize": true,
+	"randomize": false,
 	"cycle_params": false,
-	"one_shot": false,
+	"one_shot": true,
 	"file_dir": "/home/foobari/src/robogit/robo/backtest/",
-	"file_name": "data_04012021_x15.dat"
+	"file_name": "data_*.dat"
 }

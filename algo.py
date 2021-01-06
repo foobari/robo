@@ -17,13 +17,13 @@ def set_new_params(p, index):
 	return p
 
 def randomize_params(p):
-	p['cci_up'] 	=  random.uniform( 161,  211)
-	p['cci_down'] 	=  random.uniform(-173, -133)
-	#p['target'] 	=  random.uniform( 0.90,  1.10)
-	#p['hard'] 	=  random.uniform(-0.5, -0.4)
-	#p['trailing'] 	=  random.uniform(-1.00, -0.01)
-	p['cci_window'] =  int(random.uniform(72, 92))
-	p['sma_len'] 	=  int(random.uniform(166, 226)) #200
+	p['cci_up'] 	=  random.uniform( 179,  184)
+	p['cci_down'] 	=  random.uniform(-157, -150)
+	p['target'] 	=  random.uniform( 0.50,  1.20)
+	p['hard'] 	=  random.uniform(-0.5, -0.3)
+	p['trailing'] 	=  random.uniform(-1.00, -0.01)
+	p['cci_window'] =  int(random.uniform(78, 84))
+	p['sma_len'] 	=  int(random.uniform(191, 201))
 	print("randomized")
 	return p
 
@@ -37,13 +37,13 @@ def get_backtest_params():
 	backtest_params = (
 		# 5d tests
 		(181.53411,	-153.87035,	0.97391,	-0.46445,	-0.35692,	 82,	196), # after testrun1 / cci_d opt.  sh=2.87 / 3.575%
-		(181.53411,	-155.60905,	0.97391,	-0.46445,	-0.35692,	 82,	196), # after testrun1 / sma   opt.  sh=2.70
-		(181.53411,	-155.60905,	0.97391,	-0.46445,	-0.35692,	 82,	195), # after testrun1 / cci_w opt.  sh=2.70
-		(181.53411,	-155.60905,	0.97391,	-0.46445,	-0.35692,	 78,	195), # after testrun1 / target opt. sh=2.52
-		(181.53411,	-155.60905,	0.78219,	-0.46445,	-0.35692,	 78,	195), # after testrun1 sh=2.27
-		(197.54381,	-179.85561,	0.52458,	-0.43402,	-0.63594,	 83,	209), # after testrun2 sh=2.70
-		(198.72637,	-176.73968,	0.43072,	-0.46735,	-0.63427,	 87,	200), # 8d sh=2.96
-		(180.26122,	-153.15132,	0.88069,	-0.47235,	-0.28211,	 81,	202), # 8d sh=1.63
+		#(181.53411,	-155.60905,	0.97391,	-0.46445,	-0.35692,	 82,	196), # after testrun1 / sma   opt.  sh=2.70
+		#(181.53411,	-155.60905,	0.97391,	-0.46445,	-0.35692,	 82,	195), # after testrun1 / cci_w opt.  sh=2.70
+		#(181.53411,	-155.60905,	0.97391,	-0.46445,	-0.35692,	 78,	195), # after testrun1 / target opt. sh=2.52
+		#(181.53411,	-155.60905,	0.78219,	-0.46445,	-0.35692,	 78,	195), # after testrun1 sh=2.27
+		#(197.54381,	-179.85561,	0.52458,	-0.43402,	-0.63594,	 83,	209), # after testrun2 sh=2.70
+		#(198.72637,	-176.73968,	0.43072,	-0.46735,	-0.63427,	 87,	200), # 8d sh=2.96
+		#(180.26122,	-153.15132,	0.88069,	-0.47235,	-0.28211,	 81,	202), # 8d sh=1.63
 		#(202.0436609,	-167.130678,	0.518,		-0.407697,	-0.611367,	 85,	200), #v0.2.0 sharpe = 2.14
 		#(179.5546800,	-162.723594,	0.8,		-0.4,		-0.5,		 82,	200), #v0.2.0 new_cci, sharpe = 1.88
 
@@ -53,9 +53,9 @@ def get_backtest_params():
 def check_signals(stock, index, algo_params, is_last):
 	SMA_SHORT = 40
 	SMA_LONG = algo_params['sma_len']
-
 	flip = 0
 	reason = ""
+	hh = 0
 
 	buy  = float(stock['buy_series'][-1:])
 	sell = float(stock['sell_series'][-1:])
@@ -64,9 +64,26 @@ def check_signals(stock, index, algo_params, is_last):
 	if(stock['budget'] == 0):
 		stock['budget'] = stock['stocks'] * sell
 
+
+	# try to spot a trend up
+	'''
+	maxx = stock['sell_series'][-SMA_SHORT:-1].nlargest(2)
+	for i in maxx:
+		if(buy > i):
+			hh += 1
+
+	#stdd = (float(stock['sell_series'][-SMA_SHORT:-1].std()))
+	if(hh >= 2):
+		#stock['signals_list_buy'].append((index, float(stock['sell_series'][-1:])))
+		stock['reason'] = "trend"
+		reason = "trend"
+		flip = 1
+	'''
+
 	stock['sma_series_short'] = stock['buy_series'].rolling(SMA_SHORT, min_periods=0).mean()
 	stock['sma_series_long']  = stock['buy_series'].rolling(SMA_LONG,  min_periods=0).mean()
 
+	
 	# enter/exit cci
 	if(True and not is_last):
 		p_max = (float(stock['sell_series'][-algo_params['cci_window']:-1].max()))
@@ -99,8 +116,6 @@ def check_signals(stock, index, algo_params, is_last):
 						flip = -1
 		else:
 			stock['cci_series'][index] = stock['cci_series'][index-1]
-		
-
 
 	# exit SMA flips
 	if(False):
@@ -125,12 +140,19 @@ def check_signals(stock, index, algo_params, is_last):
 	# exit trailing stop-loss
 	if(True):
 		if(stock['active_position']):
-			target_price = ((1 + algo_params['trailing'] * stock['leverage'] / 100) * stock['current_top'])
+			if(stock['reason'] == "trend"):
+				trailing = -0.15
+			else:
+				trailing = algo_params['trailing']
+
+			target_price = ((1 + trailing * stock['leverage'] / 100) * stock['current_top'])
+
 			if(buy >= stock['current_top']):
 				stock['current_top'] = buy
 				stock['trailing_stop_loss'] = target_price
 			if(sell <= stock['trailing_stop_loss']):
 				reason = "trailing_stop_loss"
+				stock['reason'] = ""
 				flip = -1
 
 	# exit reach target

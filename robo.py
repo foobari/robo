@@ -28,7 +28,7 @@ import online
 index, money, last_total, best_total = 0, 0, 0, 0
 
 while(datetime.now() < datetime.now().replace(hour = 9, minute = 15)):
-	print("waiting for Nordnet to open...")
+	print(datetime.now().strftime("%H:%M:%S"), "waiting for Nordnet to open...")
 	time.sleep(10)
 
 
@@ -41,6 +41,7 @@ alg  	= algo.init()
 print alg
 sett 	= settings.init('settings_robo.json')
 stocks 	= common.init_stocks(alg, i_file)
+is_last = False
 
 with open('credentials.json', 'r') as f:
 	creds = json.load(f)
@@ -55,7 +56,7 @@ for stock in stocks:
 #############################################
 # run for one day max in live trading
 #
-while(True):
+while(not is_last):
 	money_series[index] = money
 
 	# live data from Nordnet
@@ -72,24 +73,24 @@ while(True):
 
 	# check signals, do transactions
 	for stock in stocks:
-		is_last = datetime.now() > datetime.now().replace(hour = 20, minute = 59)
+		is_last = datetime.now() > datetime.now().replace(hour = 20, minute = 50)
 
 		flip, reason = algo.check_signals(stock, index, alg, is_last)
 
 		if(flip != 0):
 			money, last_total = common.do_transaction(stock,
-									flip,
-									reason,
-									money,
-									last_total,
-									closed_deals,
-									alg,
-									index,
-									do_actions,
-									dry_run)
+								  flip,
+								  reason,
+								  money,
+								  last_total,
+								  closed_deals,
+								  alg,
+								  index,
+								  do_actions,
+								  dry_run)
 	# graph
 	if(do_graph and (index % sett['graph_update_interval'] == 0)):
-		graph.draw(stocks, money_series)
+		graph.draw(stocks)
 
 	# re-login after ~every hour
 	if(((index+1) % 300) == 0):
@@ -100,4 +101,12 @@ while(True):
 	time.sleep(sett['wait_fetching_secs'])
 	index = index + 1
 
-best_total = common.count_stats(True, stocks, last_total, best_total, closed_deals, alg)
+
+#############################################
+# and exit
+#
+common.count_stats(True, stocks, last_total, best_total, closed_deals, alg)
+for stock in stocks:
+	online.logout(stock)
+
+time.sleep(1)

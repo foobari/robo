@@ -124,7 +124,7 @@ while(True):
 
 		# graph
 		if(do_graph and (index % s['graph_update_interval'] == 0)):
-			graph.draw(stocks, money_series)
+			graph.draw(stocks)
 
 		index = index + 1
 

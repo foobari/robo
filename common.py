@@ -46,6 +46,7 @@ def init_stocks(algo_params, file):
 		stock['signals_list_buy'] = []
 		stock['browser'] = 0
 		stock['budget'] = 0
+		stock['reason'] = ''
 		if(stock['active_position'] and (stock['transaction_type'] == 'sell_away')):
 			stock['trailing_stop_loss'] = ((1 + algo_params['trailing'] * stock['leverage'] / 100) * stock['last_buy'])
 			print("MODE: sell_away", "buy", stock['last_buy'], "hard_stop_loss", stock['hard_stop_loss'], stock['stocks'])
@@ -85,7 +86,7 @@ def calc_stats(closed_deals):
 
 	return stats
 
-def count_stats(final, stocks, last_total, best_total, closed_deals, algo_params):
+def count_stats(final, stocks, last_total, grand_total, closed_deals, algo_params):
 	global g_closed_deals
 	global stats
 	this_budget = 0
@@ -94,7 +95,7 @@ def count_stats(final, stocks, last_total, best_total, closed_deals, algo_params
 
 	stats = calc_stats(closed_deals)
 
-	best_total = best_total + last_total
+	grand_total = grand_total + last_total
 
 	for stock in stocks:
 		this_budget = this_budget + stock['budget']
@@ -111,12 +112,12 @@ def count_stats(final, stocks, last_total, best_total, closed_deals, algo_params
 	if(final):
 		stats = calc_stats(g_closed_deals)
 		print("---------------------------")
-		result = best_total / stats['max_budget']
+		result = grand_total / stats['max_budget']
 		result_d = result / stats['days']
 		if(stats['sharpe'] > 1.5):
-			print("TG:", '{:.1%}'.format(result_d), '{:.1%}'.format(result), round(best_total, 2), len(g_closed_deals), round(stats['sharpe'], 2), round(stats['profitability'], 2), round(stats['profit_factor'], 2), algo_params)
+			print("TG:", '{:.1%}'.format(result_d), '{:.1%}'.format(result), round(grand_total, 2), len(g_closed_deals), round(stats['sharpe'], 2), round(stats['profitability'], 2), round(stats['profit_factor'], 2), algo_params)
 		else:
-			print("T: ", '{:.1%}'.format(result_d), '{:.1%}'.format(result), round(best_total, 2), len(g_closed_deals), round(stats['sharpe'], 2), round(stats['profitability'], 2), round(stats['profit_factor'], 2), algo_params)
+			print("T: ", '{:.1%}'.format(result_d), '{:.1%}'.format(result), round(grand_total, 2), len(g_closed_deals), round(stats['sharpe'], 2), round(stats['profitability'], 2), round(stats['profit_factor'], 2), algo_params)
 		print
 		del g_closed_deals[:]
 		first_time = True
@@ -132,17 +133,19 @@ def do_transaction(stock, flip, reason, money, last_total, closed_deals, algo_pa
 	# buy
 	if((not stock['active_position']) and (flip == 1)):
 		stock['active_position'] = True
-		stock['current_top']        = sell
+		stock['current_top']        = buy
 		stock['last_buy']           = sell
 		stock['hard_stop_loss']	    = ((1 + algo_params['hard']     * stock['leverage'] / 100) * sell)
 		stock['trailing_stop_loss'] = ((1 + algo_params['trailing'] * stock['leverage'] / 100) * sell)
 		stock['signals_list_buy'].append((index, float(stock['sell_series'][-1:])))
-		
+	
 		if(info):
-			print(datetime.now().strftime("%H:%M:%S"), "ACTION: BUY ", stock['name'], stock['stocks'], stock['last_buy'], reason)
+			print(datetime.now().strftime("%H:%M:%S"), "ACTION: BUY ", stock['name'], stock['transaction_size'], stock['last_buy'], reason)
 
 		if(not dry_run):
 			online.execute_buy_order_online(stock)
+
+		stock['stocks'] = stock['transaction_size']
 
 	# sell
 	if(stock['active_position'] and (flip == -1)):
