@@ -73,7 +73,6 @@ filenames = get_backtest_files(s['file_dir'], s['file_name'])
 
 while(True):
 	closed_deals = []
-	money_series = pd.Series([])
 	index, money, last_total = 0, 0, 0
 	stocks = common.init_stocks(alg, i_file)
 
@@ -100,9 +99,6 @@ while(True):
 	# Run for one day in backtesting
 	while(index < entries):
 		
-		if(do_graph):
-			money_series[index] = money
-
 		# check signals, do transactions
 		for stock in stocks:
 			online.get_stock_values(stock, index, backtest_data)

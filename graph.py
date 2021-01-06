@@ -43,11 +43,6 @@ def draw_stocks(stock):
 	ax.plot(stock['sma_series_short'], label = "SMA_short", linestyle=':')
 	ax.plot(stock['sma_series_long'],  label = "SMA_long", linestyle=':')
 	ax.legend(loc="upper left")
-	if(float(stock["cci_last"]) > 0):
-		color = 'green'
-	else:
-		color = 'red'
-	ax.text(0.01, 0.01, "cci: " + str(stock["cci_last"]), transform=ax.transAxes, color=color)
 
 def draw_cci(lng, shrt):
 	global ax3

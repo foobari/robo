@@ -17,13 +17,13 @@ def set_new_params(p, index):
 	return p
 
 def randomize_params(p):
-	p['cci_up'] 	=  random.uniform( 179,  184)
-	p['cci_down'] 	=  random.uniform(-157, -150)
+	p['cci_up'] 	=  random.uniform( 80,  210)
+	p['cci_down'] 	=  random.uniform(-210, -80)
 	p['target'] 	=  random.uniform( 0.50,  1.20)
-	p['hard'] 	=  random.uniform(-0.5, -0.3)
-	p['trailing'] 	=  random.uniform(-1.00, -0.01)
-	p['cci_window'] =  int(random.uniform(78, 84))
-	p['sma_len'] 	=  int(random.uniform(191, 201))
+	p['hard'] 	=  random.uniform(-0.5, -0.1)
+	p['trailing'] 	=  random.uniform(-1.00, -0.1)
+	p['cci_window'] =  int(random.uniform(50, 200))
+	p['sma_len'] 	=  int(random.uniform(50, 400))
 	print("randomized")
 	return p
 
@@ -57,13 +57,8 @@ def check_signals(stock, index, algo_params, is_last):
 	reason = ""
 	hh = 0
 
-	buy  = float(stock['buy_series'][-1:])
-	sell = float(stock['sell_series'][-1:])
-
-	# calc budget, used in stats info at the end
-	if(stock['budget'] == 0):
-		stock['budget'] = stock['stocks'] * sell
-
+	buy  = float(stock['buy_series'][-1])
+	sell = float(stock['sell_series'][-1])
 
 	# try to spot a trend up
 	'''
@@ -80,42 +75,38 @@ def check_signals(stock, index, algo_params, is_last):
 		flip = 1
 	'''
 
-	stock['sma_series_short'] = stock['buy_series'].rolling(SMA_SHORT, min_periods=0).mean()
-	stock['sma_series_long']  = stock['buy_series'].rolling(SMA_LONG,  min_periods=0).mean()
 
-	
+	stock['sma_series_short'].append(np.mean(stock['buy_series'][-SMA_SHORT:]))
+	stock['sma_series_long'].append(np.mean(stock['buy_series'][-SMA_LONG:]))
+
 	# enter/exit cci
 	if(True and not is_last):
-		p_max = (float(stock['sell_series'][-algo_params['cci_window']:-1].max()))
-		p_min = (float(stock['sell_series'][-algo_params['cci_window']:-1].min()))
-		p_clo = (float(stock['sell_series'][-1:]))
+		p_max = np.max(stock['sell_series'][-algo_params['cci_window']:])
+		p_min = np.min(stock['sell_series'][-algo_params['cci_window']:])
+		p_clo = sell
 		p_typ = ((p_max + p_min + p_clo) / 3)
-		stock['cci_ptyp'][index] = p_typ
-		p_sma = stock['cci_ptyp'].rolling(algo_params['cci_window'], min_periods=0).mean()
-		p_std = stock['cci_ptyp'].rolling(algo_params['cci_window'], min_periods=0).std()
+		stock['cci_ptyp'].append(p_typ)
+		p_sma = np.mean(stock['cci_ptyp'][-algo_params['cci_window']:])
+		p_std = np.std(stock['cci_ptyp'][-algo_params['cci_window']:])
 
-		if(float(p_std[-1:]) != 0):
-			sma = float(p_sma[-1:])
-			std = float(p_std[-1:])
-			stock['cci_last'] = (p_typ - sma) / std / 0.015
-			stock['cci_series'][index] = stock['cci_last']
-			
+		if(p_std != 0):
+			stock['cci_series'].append((p_typ - p_sma) / p_std / 0.015)
 			if(index > SMA_SHORT):
 				if(not stock['active_position']):
-					if(buy > float(stock['sma_series_long'][-1:]) and
-					   stock['cci_series'][index-1] < algo_params['cci_down'] and
-					   stock['cci_series'][index] >= algo_params['cci_down']):
+					if(buy > stock['sma_series_long'][-1] and
+					   stock['cci_series'][-2] < algo_params['cci_down'] and
+					   stock['cci_series'][-1] >= algo_params['cci_down']):
 						reason = "cci_buy"
 						flip = 1
 
 				if(stock['active_position']):
-					if(buy < float(stock['sma_series_long'][-1:]) and
-					   stock['cci_series'][index-1] > algo_params['cci_up'] and
-					   stock['cci_series'][index] <= algo_params['cci_up']):
+					if(buy < float(stock['sma_series_long'][-1]) and
+					   stock['cci_series'][-2] > algo_params['cci_up'] and
+					   stock['cci_series'][-1] <= algo_params['cci_up']):
 						reason = "cci_sell"
 						flip = -1
 		else:
-			stock['cci_series'][index] = stock['cci_series'][index-1]
+			stock['cci_series'].append(0)
 
 	# exit SMA flips
 	if(False):

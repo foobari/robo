@@ -33,7 +33,6 @@ while(datetime.now() < datetime.now().replace(hour = 9, minute = 15)):
 
 
 closed_deals = []	
-money_series = pd.Series([])
  
 dry_run, i_file, o_file, do_graph, do_actions = common.check_args(sys.argv)
 
@@ -57,8 +56,6 @@ for stock in stocks:
 # run for one day max in live trading
 #
 while(not is_last):
-	money_series[index] = money
-
 	# live data from Nordnet
 	try:
 		for stock in stocks:
