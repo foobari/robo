@@ -17,13 +17,18 @@ def execute_buy_order_online(stock):
 	print("Execute buy order", stock['name'])
 	# click buy
 	WebDriverWait(stock['browser'], 10).until(EC.presence_of_element_located((By.XPATH, '//*[@id="main-content"]/div[1]/div[1]/div/div/div/div/div/div[2]/div[2]/div[1]/a'))).click()
+	print("buy", stock['name'])
 
 	# select account
+	time.sleep(0.1)
 	Select(WebDriverWait(stock['browser'], 10).until(EC.presence_of_element_located((By.XPATH, '//*[@id="main-content"]/div[2]/div/div/div[3]/div/div/div/div[1]/div[1]/div/div/div/select')))).select_by_value(stock['account'])
-
+	print("account", stock['account'])
+	
 	# quantity
-	amount = stock['stocks']
+	time.sleep(0.1)
+	amount = stock['transaction_size']
 	WebDriverWait(stock['browser'], 10).until(EC.presence_of_element_located((By.XPATH, '//*[@id="main-content"]/div[2]/div/div/div[3]/div/div/div/div[2]/div[1]/div[1]/div[2]/div/input'))).send_keys(str(amount))
+	print("amount", str(amount))
 
 	# price
 	# price = 2.11
@@ -32,21 +37,29 @@ def execute_buy_order_online(stock):
 	# execute	
 	time.sleep(0.5)
 	WebDriverWait(stock['browser'], 10).until(EC.presence_of_element_located((By.XPATH, '//*[@id="main-content"]/div[2]/div/div/div[3]/div/div/div/div[2]/div[7]/span/button/div/span'))).click()
-	# return
-	stock['browser'].get(stock['url'])
+	print("execute")
 
+	# return
+	time.sleep(0.1)
+	stock['browser'].get(stock['url'])
+	print("return")
 
 def execute_sell_order_online(stock):
 	print("Execute sell order", stock['name'])
 	# click sell
 	WebDriverWait(stock['browser'], 10).until(EC.presence_of_element_located((By.XPATH, '//*[@id="main-content"]/div[1]/div[1]/div/div/div/div/div/div[2]/div[2]/div[2]/a'))).click()
+	print("sell", stock['name'])
 
 	# select account
+	time.sleep(0.1)
 	Select(WebDriverWait(stock['browser'], 10).until(EC.presence_of_element_located((By.XPATH, '//*[@id="main-content"]/div[2]/div/div/div[3]/div/div/div/div[1]/div[1]/div/div/div/select')))).select_by_value(stock['account'])
+	print("account", stock['account'])
 
 	# quantity
-	amount = stock['stocks']
+	time.sleep(0.1)
+	amount = stock['transaction_size']
 	WebDriverWait(stock['browser'], 10).until(EC.presence_of_element_located((By.XPATH, '//*[@id="main-content"]/div[2]/div/div/div[3]/div/div/div/div[2]/div[1]/div[1]/div[2]/div/input'))).send_keys(str(amount))
+	print("amount", str(amount))
 
 	# price
 	#price = 4.00
@@ -56,28 +69,30 @@ def execute_sell_order_online(stock):
 	#execute
 	time.sleep(0.5)
 	WebDriverWait(stock['browser'], 10).until(EC.presence_of_element_located((By.XPATH, '//*[@id="main-content"]/div[2]/div/div/div[3]/div/div/div/div[2]/div[7]/span/button/div/span'))).click()
+	print("execute")
 
 	# return
+	time.sleep(0.1)
 	stock['browser'].get(stock['url'])
-
+	print("return")
 
 def stock_sanity_check(stock, index):
-	if((stock['buy_series'][index] == 0)):
+	if((stock['buy_series'][-1] == 0)):
 		print(stock['name'], "buy read zero, copy last")
 		stock['valid'] = False
 		if(index > 0):
-			stock['buy_series'][index]  = stock['buy_series'][index - 1]
-	if((stock['sell_series'][index] == 0)):
+			stock['buy_series'][-1]  = stock['buy_series'][-2]
+	if((stock['sell_series'][-1] == 0)):
 		stock['valid'] = False
 		print(stock['name'], "sell read zero, copy last")
 		if(index > 0):
-			stock['sell_series'][index] = stock['sell_series'][index - 1]
-	if((stock['sell_series'][index] - stock['buy_series'][index]) > stock['spread']):
+			stock['sell_series'][-1] = stock['sell_series'][-2]
+	if((stock['sell_series'][-1] - stock['buy_series'][-1]) > stock['spread']):
 		stock['valid'] = False
 		if(index > 0):
 			print(stock['name'], "spread too big, copy last")
-			stock['buy_series'][index]  = stock['buy_series'][index - 1]
-			stock['sell_series'][index] = stock['sell_series'][index - 1]
+			stock['buy_series'][-1]  = stock['buy_series'][-2]
+			stock['sell_series'][-1] = stock['sell_series'][-2]
 
 
 
@@ -90,9 +105,9 @@ def get_stock_values(stock, index, backtest_data=None):
 
 		if(index == 0 and (buy < 0.01 or sell < 0.01)):
 			raise Exception("First value zero")
-		stock['buy_series'][index]  = buy
-		stock['sell_series'][index] = sell
-		
+		stock['buy_series'].append(buy)
+		stock['sell_series'].append(sell)
+		stock_sanity_check(stock,index)
 	else:
 		if(stock['type'] == 'long'):
 			if(index == 0 and (backtest_data[index][0] < 0.01 or backtest_data[index][1] < 0.01)):
@@ -104,8 +119,7 @@ def get_stock_values(stock, index, backtest_data=None):
 				raise Exception("First value zero")
 			stock['buy_series'].append(backtest_data[index][2])
 			stock['sell_series'].append(backtest_data[index][3])
-
-	stock_sanity_check(stock,index)
+	
 
 def login(stock, creds):
 	print("Login")
@@ -123,4 +137,7 @@ def login(stock, creds):
 
 def logout(stock):
 	stock['browser'].close()
+
+def refresh(stock):
+	stock['browser'].refresh()
 

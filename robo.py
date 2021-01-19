@@ -27,10 +27,6 @@ import online
 
 index, money, last_total, best_total = 0, 0, 0, 0
 
-while(datetime.now() < datetime.now().replace(hour = 9, minute = 15)):
-	print(datetime.now().strftime("%H:%M:%S"), "waiting for Nordnet to open...")
-	time.sleep(10)
-
 
 closed_deals = []	
  
@@ -41,6 +37,11 @@ print alg
 sett 	= settings.init('settings_robo.json')
 stocks 	= common.init_stocks(alg, i_file)
 is_last = False
+
+while(datetime.now() < datetime.now().replace(hour = 9, minute = 15)):
+	print(datetime.now().strftime("%H:%M:%S"), "waiting for Nordnet to open...")
+	time.sleep(10)
+
 
 with open('credentials.json', 'r') as f:
 	creds = json.load(f)
@@ -71,8 +72,9 @@ while(not is_last):
 	# check signals, do transactions
 	for stock in stocks:
 		is_last = datetime.now() > datetime.now().replace(hour = 20, minute = 50)
+		no_buy  = datetime.now() > datetime.now().replace(hour = 20, minute = 00)
 
-		flip, reason = algo.check_signals(stock, index, alg, is_last)
+		flip, reason = algo.check_signals(stock, index, alg, is_last, no_buy)
 
 		if(flip != 0):
 			money, last_total = common.do_transaction(stock,
@@ -88,6 +90,12 @@ while(not is_last):
 	# graph
 	if(do_graph and (index % sett['graph_update_interval'] == 0)):
 		graph.draw(stocks)
+
+	# refresh after every 30 ticks / ~5min
+	if(((index+1) % 30) == 0):
+		for stock in stocks:
+			print("refresh", stock['name'])
+			online.refresh(stock)
 
 	# re-login after ~every hour
 	if(((index+1) % 300) == 0):

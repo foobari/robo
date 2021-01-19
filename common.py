@@ -4,6 +4,7 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import Select
+import requests
 import numpy as np
 import math
 import time
@@ -40,6 +41,7 @@ def init_stocks(algo_params, file):
 		stock['sma_series_short'] = []
 		stock['sma_series_long'] = []
 		stock['cci_series'] = []
+		stock['rsi_series'] = []
 		stock['cci_ptyp'] = []
 		stock['signals_list_sell'] = []
 		stock['signals_list_buy'] = []
@@ -51,12 +53,6 @@ def init_stocks(algo_params, file):
 		else:
 			stock['hard_stop_loss'] = 0
 			stock['trailing_stop_loss'] = 0
-
-		s = settings.get_settings()
-		if(s['use_fixed_stock_amount']):
-			stock['stocks'] = s['stock_amount_to_buy']
-		else:
-			stock['stocks'] = stock['transaction_size']
 
 	return stocks
 
@@ -71,6 +67,7 @@ def calc_stats(closed_deals):
 	results = []
 	all_buys  = 0
 	all_sells = 0
+	
 	if(len(closed_deals) > 0):
 		for deal in closed_deals:
 			buy, sell, res = get_deal_result(deal)
@@ -117,22 +114,23 @@ def count_stats(final, stocks, last_total, grand_total, closed_deals, algo_param
 
 	stats = calc_stats(closed_deals)
 
-	print('{:.1%}'.format(stats['result_per']), round(stats['all_buys'], 2), round(stats['all_sells'], 2), round(stats['result_eur'], 2), len(closed_deals), round(stats['sharpe'], 2), round(stats['profitability'], 2), round(stats['profit_factor'], 2))
+	print('{:.2%}'.format(stats['result_per']), round(stats['all_buys'], 2), round(stats['all_sells'], 2), round(stats['result_eur'], 2), len(closed_deals), round(stats['sharpe'], 2), round(stats['profitability'], 2), round(stats['profit_factor'], 2))
 
 	stats['days'] = stats['days'] + 1
 
 	if(final):
 		stats = calc_stats(g_closed_deals)
 		print("---------------------------")
-		result   = stats['result_per']
-		if(stats['sharpe'] >= 3.0):
+		if((stats['sharpe']   >= 2.8) and ((len(g_closed_deals) / stats['days']) >= 0.75) and stats['result_per'] >= 0.032):
 			id = "T3:"
-		elif(stats['sharpe'] >= 2.0):
+		elif((stats['sharpe']   >= 2.0) and ((len(g_closed_deals) / stats['days']) >= 0.75) and stats['result_per'] >= 0.02):
 			id = "T2:"
+		elif((stats['sharpe'] >= 1.0) and ((len(g_closed_deals) / stats['days']) >= 0.75)):
+			id = "T1:"
 		else:
 			id = "T: "
 
-		print(id, '{:.1%}'.format(result), round(stats['result_eur'], 2), len(g_closed_deals), round(stats['sharpe'], 2), round(stats['profitability'], 2), round(stats['profit_factor'], 2), algo_params)
+		print(id, '{:.2%}'.format(stats['result_per']), round(stats['result_eur'], 2), len(g_closed_deals), round(stats['sharpe'], 2), round(stats['profitability'], 2), round(stats['profit_factor'], 2), algo_params)
 		print
 		del g_closed_deals[:]
 		first_time = True
@@ -140,6 +138,19 @@ def count_stats(final, stocks, last_total, grand_total, closed_deals, algo_param
 
 	return grand_total
 
+
+def post_to_toilet(time, action, name, amount, price):
+	if(False):
+		url = "http://ptsv2.com/t/stockrobo/post"
+		data = {
+			"time": time,
+			"action": action,
+			"name": name,
+			"amount": amount,
+			"price": price
+		}
+		resp = requests.post(url, json=data)
+		print resp
 
 def do_transaction(stock, flip, reason, money, last_total, closed_deals, algo_params, index, info, dry_run):
 	buy  = float(stock['buy_series'][-1])
@@ -153,27 +164,37 @@ def do_transaction(stock, flip, reason, money, last_total, closed_deals, algo_pa
 		stock['hard_stop_loss']	    = ((1 + algo_params['hard']     * stock['leverage'] / 100) * sell)
 		stock['trailing_stop_loss'] = ((1 + algo_params['trailing'] * stock['leverage'] / 100) * sell)
 		stock['signals_list_buy'].append((index, stock['sell_series'][-1]))
-	
+
+		if(stock['buy_full_money'] == True):
+			stock['transaction_size'] = int(stock['transaction_money'] / sell)
+
 		if(info):
 			print(datetime.now().strftime("%H:%M:%S"), "ACTION: BUY ", stock['name'], stock['transaction_size'], stock['last_buy'], reason)
 
+		post_to_toilet(datetime.now().strftime("%H:%M:%S"), "BUY", stock['name'], stock['transaction_size'], stock['last_buy'])
+
+		stock['stocks'] = stock['transaction_size']
 		if(not dry_run):
 			online.execute_buy_order_online(stock)
 
-		stock['stocks'] = stock['transaction_size']
+		
 
 	# sell
 	if(stock['active_position'] and (flip == -1)):
-		money = money + ((buy - stock['last_buy']) * stock['stocks'])
+		money = money + ((buy - stock['last_buy']) * stock['transaction_size'])
 		last_total = money
-		this_deal = tuple([stock['stocks'], stock['last_buy'], buy])
+		this_deal = tuple([stock['transaction_size'], stock['last_buy'], buy])
 		closed_deals.append(this_deal)
 		stock['current_top'] = 0
 		stock['active_position'] = False
 		stock['signals_list_sell'].append((index, stock['buy_series'][-1]))
+		result_eur = stock['stocks']*(buy - stock['last_buy'])
+		result_per = (buy - stock['last_buy']) / stock['last_buy']
 		if(info):
-			print(datetime.now().strftime("%H:%M:%S"), "ACTION: SELL", stock['name'], stock['stocks'], buy, reason, "total", round(last_total, 2))
+			print(datetime.now().strftime("%H:%M:%S"), "ACTION: SELL", stock['name'], stock['transaction_size'], buy, '{:.1%}'.format(result_per), round(result_eur, 2), reason, "total", round(last_total, 2))
 		
+		post_to_toilet(datetime.now().strftime("%H:%M:%S"), "SELL", stock['name'], stock['transaction_size'], buy)
+
 		if(not dry_run):
 			online.execute_sell_order_online(stock)
 

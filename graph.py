@@ -1,7 +1,7 @@
 import pandas as pd
 import matplotlib.pyplot as plt
 import matplotlib.ticker as ticker
-import pandas_datareader as web
+#import pandas_datareader as web
 import numpy as np
 import math
 import os,glob
@@ -10,11 +10,11 @@ import pdb
 import algo
 
 fig = plt.figure(figsize=(12,10))
-ax1 = fig.add_subplot(311)
-ax2 = fig.add_subplot(312)
-ax3 = fig.add_subplot(313)
+ax1 = fig.add_subplot(411)
+ax2 = fig.add_subplot(412)
+ax3 = fig.add_subplot(413)
+ax4 = fig.add_subplot(414)
 
-cci_u, cci_d = 0, 0
 
 def draw_stocks(stock):
 	global ax1, ax2
@@ -46,37 +46,56 @@ def draw_stocks(stock):
 
 def draw_cci(lng, shrt):
 	global ax3
-	global cci_u, cci_d
-	ax3.clear()	
-	ax3.axhline(y=  cci_u, color='olivedrab', label = "limits (bull)", linestyle='dotted')
-	ax3.axhline(y=  cci_d, color='olivedrab', linestyle='dotted')
-	ax3.axhline(y= -cci_d, color='steelblue', label = "limits (bear)", linestyle='dotted')
-	ax3.axhline(y= -cci_u, color='steelblue', linestyle='dotted')
+
+	bp = algo.get_backtest_params()
+	cci_u = bp[0][0]
+	cci_d = bp[0][1]
+
+	ax3.clear()
+	ax3.set(ylim=(-250, 250))
+	ax3.axhline(y=  cci_u, color='red', label = "cci up", linestyle='dotted')
+	ax3.axhline(y=  cci_d, color='green', label = "cci down", linestyle='dotted')
+	#ax3.axhline(y= -cci_d, color='steelblue', label = "limits (bear)", linestyle='dotted')
+	#ax3.axhline(y= -cci_u, color='steelblue', linestyle='dotted')
 	ax3.plot(lng,  color="olivedrab", label = "cci_series (bull)")
 	ax3.plot(shrt, color="steelblue", label = "cci_series (bear)")
 	ax3.legend(loc="upper left")
 
+def draw_rsi(lng, shrt):
+	global ax4
+
+	bp = algo.get_backtest_params()
+	rsi = bp[0][8]
+
+	ax4.clear()
+	ax4.set(ylim=( 30, 70))
+	ax4.axhline(y=  50, color='green', linestyle='dotted')
+	ax4.axhline(y= rsi, color='red', linestyle='dotted')
+	ax4.axhline(y= 100-rsi, color='red', linestyle='dotted')
+	ax4.plot(lng,  color="olivedrab", label = "rsi_series (bull)")
+	ax4.plot(shrt, color="steelblue", label = "rsi_series (bear)")
+	ax4.legend(loc="upper left")
+
 
 def draw(stocks):
-	lng  = pd.Series([])
-	shrt = pd.Series([])
+	cci_lng  = []
+	cci_shrt = []
 
+	rsi_lng =[]
+	rsi_shrt =[]
 	for stock in stocks:
 		draw_stocks(stock)
 		if(stock['type'] == 'long'):
-			lng  = stock['cci_series']
+			cci_lng  = stock['cci_series']
+			rsi_lng  = stock['rsi_series']
 		else:
-			shrt = stock['cci_series']
-	draw_cci(lng, shrt)	
+			cci_shrt = stock['cci_series']
+			rsi_shrt  = stock['rsi_series']
+	draw_cci(cci_lng, cci_shrt)
+	draw_rsi(rsi_lng, rsi_shrt)
 	plt.draw()
 	plt.pause(0.0001)
 
-
 def init():
-	global cci_u, cci_d
-	
 	plt.ion()
-	bp = algo.get_backtest_params()
-	cci_u = bp[0][0]
-	cci_d = bp[0][1]
 

@@ -104,7 +104,7 @@ while(True):
 			online.get_stock_values(stock, index, backtest_data)
 
 			is_last = (index == (entries - 1))
-			flip, reason = algo.check_signals(stock, index, alg, is_last)
+			flip, reason = algo.check_signals(stock, index, alg, is_last, False)
 
 			if(flip != 0):
 				money, last_total = common.do_transaction(stock,

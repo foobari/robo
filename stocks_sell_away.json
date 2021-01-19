@@ -1,15 +1,17 @@
 [
 	{
-		"name": "T SHRT DAX NORDNET F23",
-		"url": "https://www.nordnet.fi/markkinakatsaus/unlimited-turbot/16786298-t-shrt-dax",
+		"name": "T SHRT DAX NORDNET F279",
+		"url": "https://www.nordnet.fi/markkinakatsaus/unlimited-turbot/17382669-t-shrt-dax",
 		"type": "short",
-		"leverage": 20,
+		"leverage": 30,
 		"spread": 0.06,
 		"account": "1",
 		"transaction_type": "sell_away",
+		"buy_full_money": false,
 		"active_position": true,
-		"last_buy": 3.20,
-		"hard_stop_loss": 3.00,
+		"last_buy": 4.75,
+		"hard_stop_loss": 4.70,
+		"transaction_size": 100,
 		"stocks": 100,
 		"store_to_file": false
 	}
