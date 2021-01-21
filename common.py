@@ -43,13 +43,15 @@ def init_stocks(algo_params, file):
 		stock['cci_series'] = []
 		stock['rsi_series'] = []
 		stock['cci_ptyp'] = []
+		stock['hurst'] = []
 		stock['signals_list_sell'] = []
 		stock['signals_list_buy'] = []
 		stock['browser'] = 0
 		stock['reason'] = ''
+
 		if(stock['active_position'] and (stock['transaction_type'] == 'sell_away')):
 			stock['trailing_stop_loss'] = ((1 + algo_params['trailing'] * stock['leverage'] / 100) * stock['last_buy'])
-			print("MODE: sell_away", "buy", stock['last_buy'], "hard_stop_loss", stock['hard_stop_loss'], stock['stocks'])
+			print("buy", stock['last_buy'], "hard_stop_loss", stock['hard_stop_loss'], stock['stocks'])
 		else:
 			stock['hard_stop_loss'] = 0
 			stock['trailing_stop_loss'] = 0

@@ -38,6 +38,9 @@ sett 	= settings.init('settings_robo.json')
 stocks 	= common.init_stocks(alg, i_file)
 is_last = False
 
+for stock in stocks:
+	print(stock['name'], stock['url'], stock['transaction_type'])
+	
 while(datetime.now() < datetime.now().replace(hour = 9, minute = 15)):
 	print(datetime.now().strftime("%H:%M:%S"), "waiting for Nordnet to open...")
 	time.sleep(10)

@@ -5,6 +5,7 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import Select
 import numpy as np
+import os
 import math
 import time
 import json
@@ -123,7 +124,9 @@ def get_stock_values(stock, index, backtest_data=None):
 
 def login(stock, creds):
 	print("Login")
-	stock['browser'] = webdriver.Chrome()
+	options = webdriver.ChromeOptions()
+	options.add_argument("--DBUS_SESSION_BUS_ADDRESS=/dev/null ")
+	stock['browser'] = webdriver.Chrome(options = options)
 	stock['browser'].get('https://classic.nordnet.fi/mux/login/startFI.html')
 	username = WebDriverWait(stock['browser'], 10).until(EC.presence_of_element_located((By.ID, 'username')))
 	username.send_keys(creds['username'])

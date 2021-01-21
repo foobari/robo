@@ -4,6 +4,8 @@ import math
 import numpy as np
 import scipy
 
+#from hurst import compute_Hc
+
 def set_new_params(p, index):
 	bp = get_backtest_params()
 	p['cci_up'] 	= bp[index][0]
@@ -20,11 +22,11 @@ def set_new_params(p, index):
 
 def randomize_params(p):
 	#p['cci_up'] 	=  random.uniform( 165,  175)
-	#p['cci_down'] 	=  random.uniform(-152, -142)
+	p['cci_down'] 	=  random.uniform(-162, -112)
 	#p['target'] 	=  random.uniform( 0.675,  1.025)
 	#p['hard'] 	=  random.uniform(-0.55, -0.35)
 	#p['trailing'] 	=  random.uniform(-0.5, -0.4)
-	#p['cci_window'] =  int(random.uniform(76, 86))
+	p['cci_window'] =  int(random.uniform(46, 120))
 	#p['sma_len'] 	=  int(random.uniform(181, 191))
 	#p['rsi_len'] 	=  int(random.uniform(191, 201))
 	#p['rsi_lim'] 	=  int(random.uniform(32, 46))
@@ -56,6 +58,7 @@ def check_signals(stock, index, algo_params, is_last, no_buy):
 	flip = 0
 	reason = ""
 	hh = 0
+	H = 0
 
 	RSI_WINDOW = algo_params['rsi_len']
 	RSI_LIMIT  = algo_params['rsi_lim']
@@ -66,7 +69,24 @@ def check_signals(stock, index, algo_params, is_last, no_buy):
 	stock['sma_series_short'].append(np.mean(stock['buy_series'][-SMA_SHORT:]))
 	stock['sma_series_long'].append(np.mean(stock['buy_series'][-SMA_LONG:]))
 
-	# rsi
+	
+	# hurst exponent
+	'''
+	if(index > 100):
+		H, c, val = compute_Hc(stock['buy_series'][-200:])
+		if(H < 0.5):
+			text = "Mean reverting"
+		elif(H == 0.5):
+			text = "Brownian motion"
+		elif(H > 0.5):
+			text = "Trending"
+		print(text, "{:.4f}".format(H))
+		stock['hurst'].append(H)
+	else:
+		stock['hurst'].append(0.5)
+	'''
+
+	# enter rsi 
 	if(True and not is_last):
 		gains = []
 		losses = []
@@ -103,43 +123,8 @@ def check_signals(stock, index, algo_params, is_last, no_buy):
 				flip = 1
 				reason = 'rsi'
 
-		if(index > RSI_WINDOW):
-			if(stock['rsi_series'][-2] > (100-RSI_LIMIT) and stock['rsi_series'][-1] < (100-RSI_LIMIT)):
-				flip = -1
-				reason = 'rsi'
 
-	# test cci+rsi
-	'''
-	if(True and not is_last):
-		p_max = np.max(stock['sell_series'][-algo_params['cci_window']:])
-		p_min = np.min(stock['sell_series'][-algo_params['cci_window']:])
-		p_clo = sell
-		p_typ = ((p_max + p_min + p_clo) / 3)
-		stock['cci_ptyp'].append(p_typ)
-		p_sma = np.mean(stock['cci_ptyp'][-algo_params['cci_window']:])
-		p_std = np.std(stock['cci_ptyp'][-algo_params['cci_window']:])
-
-		if(p_std != 0):
-			stock['cci_series'].append((p_typ - p_sma) / p_std / 0.015)
-			if(index > SMA_SHORT):
-				if(not stock['active_position']):
-					if(reason == 'rsi' and
-					   stock['cci_series'][-2] < algo_params['cci_down'] and
-					   stock['cci_series'][-1] >= algo_params['cci_down']):
-						reason = "cci_buy"
-						flip = 1
-
-				if(stock['active_position']):
-					if(reason == 'rsi' and
-					   stock['cci_series'][-2] > algo_params['cci_up'] and
-					   stock['cci_series'][-1] <= algo_params['cci_up']):
-						reason = "cci_sell"
-						flip = -1
-		else:
-			stock['cci_series'].append(0)
-	'''
-	
-	# enter/exit cci
+	# enter/exit cci + rsi
 	if(True and not is_last):
 		p_max = np.max(stock['sell_series'][-algo_params['cci_window']:])
 		p_min = np.min(stock['sell_series'][-algo_params['cci_window']:])
@@ -153,18 +138,20 @@ def check_signals(stock, index, algo_params, is_last, no_buy):
 			stock['cci_series'].append((p_typ - p_sma) / p_std / 0.015)
 			if(index > SMA_LONG):
 				if(not stock['active_position']):
-					if(buy > stock['sma_series_long'][-1] and
-					   stock['cci_series'][-2] < algo_params['cci_down'] and
-					   stock['cci_series'][-1] >= algo_params['cci_down']):
-						reason = "cci_buy"
-						flip = 1
+					if(stock['cci_series'][-2] < algo_params['cci_down'] and
+					   stock['cci_series'][-1] >= algo_params['cci_down'] and
+					   stock['rsi_series'][-1] > 50):
+						if(buy > stock['sma_series_long'][-1]):
+							reason = "cci_buy"
+							flip = 1
 
 				if(stock['active_position']):
-					if(buy < float(stock['sma_series_long'][-1]) and
-					   stock['cci_series'][-2] > algo_params['cci_up'] and
-					   stock['cci_series'][-1] <= algo_params['cci_up']):
-						reason = "cci_sell"
-						flip = -1
+					if(stock['cci_series'][-2] > algo_params['cci_up'] and
+					   stock['cci_series'][-1] <= algo_params['cci_up'] and
+					   stock['rsi_series'][-1] < 50):
+						if(buy < float(stock['sma_series_long'][-1])):
+							reason = "cci_sell"
+							flip = -1
 		else:
 			stock['cci_series'].append(0)
 

@@ -28,12 +28,13 @@ def draw_stocks(stock):
 		x_val = [x[0] for x in stock['signals_list_sell']]
 		y_val = [x[1] for x in stock['signals_list_sell']]
 		ax.plot(x_val, y_val, 'rv')
-
+		#ax.axvline(x = x_val, color='red', linestyle='--')
+	
 	if(len(stock['signals_list_buy'])):
 		x_val = [x[0] for x in stock['signals_list_buy']]
 		y_val = [x[1] for x in stock['signals_list_buy']]
-		ax.plot(x_val, y_val, 'g^')
-
+		ax.plot(x_val, y_val, 'g^',  color='blue')
+		#ax.axvline(x = x_val, color='green', linestyle='--')
 
 	if(stock['type'] == 'long'):
 		color = 'olivedrab'
@@ -55,8 +56,6 @@ def draw_cci(lng, shrt):
 	ax3.set(ylim=(-250, 250))
 	ax3.axhline(y=  cci_u, color='red', label = "cci up", linestyle='dotted')
 	ax3.axhline(y=  cci_d, color='green', label = "cci down", linestyle='dotted')
-	#ax3.axhline(y= -cci_d, color='steelblue', label = "limits (bear)", linestyle='dotted')
-	#ax3.axhline(y= -cci_u, color='steelblue', linestyle='dotted')
 	ax3.plot(lng,  color="olivedrab", label = "cci_series (bull)")
 	ax3.plot(shrt, color="steelblue", label = "cci_series (bear)")
 	ax3.legend(loc="upper left")
@@ -90,7 +89,8 @@ def draw(stocks):
 			rsi_lng  = stock['rsi_series']
 		else:
 			cci_shrt = stock['cci_series']
-			rsi_shrt  = stock['rsi_series']
+			rsi_shrt = stock['rsi_series']
+			
 	draw_cci(cci_lng, cci_shrt)
 	draw_rsi(rsi_lng, rsi_shrt)
 	plt.draw()
