@@ -111,13 +111,13 @@ def get_stock_values(stock, index, backtest_data=None):
 		stock_sanity_check(stock,index)
 	else:
 		if(stock['type'] == 'long'):
-			if(index == 0 and (backtest_data[index][0] < 0.01 or backtest_data[index][1] < 0.01)):
-				raise Exception("First value zero")
+			#if(index == 0 and (backtest_data[index][0] < 0.01 or backtest_data[index][1] < 0.01)):
+			#	raise Exception("First value zero")
 			stock['buy_series'].append(backtest_data[index][0])
 			stock['sell_series'].append(backtest_data[index][1])
 		if(stock['type'] == 'short'):
-			if(index == 0 and (backtest_data[index][2] < 0.01 or backtest_data[index][3] < 0.01)):
-				raise Exception("First value zero")
+			#if(index == 0 and (backtest_data[index][2] < 0.01 or backtest_data[index][3] < 0.01)):
+			#	raise Exception("First value zero")
 			stock['buy_series'].append(backtest_data[index][2])
 			stock['sell_series'].append(backtest_data[index][3])
 	

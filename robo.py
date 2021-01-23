@@ -40,7 +40,7 @@ is_last = False
 
 for stock in stocks:
 	print(stock['name'], stock['url'], stock['transaction_type'])
-	
+
 while(datetime.now() < datetime.now().replace(hour = 9, minute = 15)):
 	print(datetime.now().strftime("%H:%M:%S"), "waiting for Nordnet to open...")
 	time.sleep(10)
@@ -74,10 +74,12 @@ while(not is_last):
 
 	# check signals, do transactions
 	for stock in stocks:
-		is_last = datetime.now() > datetime.now().replace(hour = 20, minute = 50)
-		no_buy  = datetime.now() > datetime.now().replace(hour = 20, minute = 00)
-
-		flip, reason = algo.check_signals(stock, index, alg, is_last, no_buy)
+		if(datetime.now() > datetime.now().replace(hour = 20, minute = 50)):
+			flip = -1
+			reason = 'day_close'
+		else:
+			stock['no_buy']  = datetime.now() > datetime.now().replace(hour = 20, minute = 00)
+			flip, reason = algo.check_signals(stock, index, alg, is_last)
 
 		if(flip != 0):
 			money, last_total = common.do_transaction(stock,

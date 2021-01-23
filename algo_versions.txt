@@ -4,6 +4,7 @@ cci enter requires rsi > 50
 cci exit  requires rsi < 50
 
 days	deals	%tot	€/day	deals/d	sharpe	prfbtl	prf_f	cci_up	cc_down	target	hard	trailing	cci_w	sma_len	rsi_len	rsi_lim
+23	30	4.15%	10.74	1.30	3.45	0.70	5.70	170	-147	0.875,	-0.45, 	-0.6		81,	186,	196,	34
 22	28	4.72%	11.92	1.27	3.91	0.75	8.01	170	-147	0.875,	-0.45, 	-0.6		81,	186,	196,	34
 21	28	4.72%	12.49	1.33	3.96	0.75	9.01	170	-147	0.875,	-0.45,	-0.6		81,	186,	196,	34
 

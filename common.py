@@ -48,6 +48,7 @@ def init_stocks(algo_params, file):
 		stock['signals_list_buy'] = []
 		stock['browser'] = 0
 		stock['reason'] = ''
+		stock['no_buy'] = False
 
 		if(stock['active_position'] and (stock['transaction_type'] == 'sell_away')):
 			stock['trailing_stop_loss'] = ((1 + algo_params['trailing'] * stock['leverage'] / 100) * stock['last_buy'])
