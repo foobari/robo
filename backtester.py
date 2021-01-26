@@ -98,7 +98,6 @@ while(True):
 
 	# Run for one day in backtesting
 	while(index < entries):
-		
 		# check signals, do transactions
 		for stock in stocks:
 			online.get_stock_values(stock, index, backtest_data)

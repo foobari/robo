@@ -75,11 +75,12 @@ while(not is_last):
 	# check signals, do transactions
 	for stock in stocks:
 		if(datetime.now() > datetime.now().replace(hour = 20, minute = 50)):
+			is_last = True
 			flip = -1
 			reason = 'day_close'
 		else:
 			stock['no_buy']  = datetime.now() > datetime.now().replace(hour = 20, minute = 00)
-			flip, reason = algo.check_signals(stock, index, alg, is_last)
+			flip, reason = algo.check_signals(stock, index, alg)
 
 		if(flip != 0):
 			money, last_total = common.do_transaction(stock,

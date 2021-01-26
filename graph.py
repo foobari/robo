@@ -9,11 +9,12 @@ import pdb
 
 import algo
 
-fig = plt.figure(figsize=(12,10))
-ax1 = fig.add_subplot(411)
-ax2 = fig.add_subplot(412)
-ax3 = fig.add_subplot(413)
-ax4 = fig.add_subplot(414)
+fig = plt.figure(figsize=(12,12))
+ax1 = fig.add_subplot(511)
+ax2 = fig.add_subplot(512)
+ax3 = fig.add_subplot(513)
+ax4 = fig.add_subplot(514)
+ax5 = fig.add_subplot(515)
 
 
 def draw_stocks(stock):
@@ -75,6 +76,15 @@ def draw_rsi(lng, shrt):
 	ax4.plot(shrt, color="steelblue", label = "rsi_series (bear)")
 	ax4.legend(loc="upper left")
 
+def draw_hh(lng, shrt):
+	global ax5
+
+	ax5.clear()
+	#ax5.axhline(y= 0.5, color='green', linestyle='dotted')
+	ax5.plot(lng,  color="olivedrab", label = "test")
+	ax5.plot(shrt, color="steelblue", label = "test")
+	ax5.legend(loc="upper left")
+
 
 def draw(stocks):
 	cci_lng  = []
@@ -87,12 +97,15 @@ def draw(stocks):
 		if(stock['type'] == 'long'):
 			cci_lng  = stock['cci_series']
 			rsi_lng  = stock['rsi_series']
+			#hh_lng   = stock['hh']
 		else:
 			cci_shrt = stock['cci_series']
 			rsi_shrt = stock['rsi_series']
+			#hh_shrt  = stock['hh']
 			
 	draw_cci(cci_lng, cci_shrt)
 	draw_rsi(rsi_lng, rsi_shrt)
+	#draw_hh(hh_lng, hh_shrt)
 	plt.draw()
 	plt.pause(0.0001)
 

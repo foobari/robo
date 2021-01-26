@@ -44,6 +44,8 @@ def init_stocks(algo_params, file):
 		stock['rsi_series'] = []
 		stock['cci_ptyp'] = []
 		stock['hurst'] = []
+		stock['hh'] = []
+		stock['hh_sma'] = []
 		stock['signals_list_sell'] = []
 		stock['signals_list_buy'] = []
 		stock['browser'] = 0
@@ -195,7 +197,7 @@ def do_transaction(stock, flip, reason, money, last_total, closed_deals, algo_pa
 		result_per = (buy - stock['last_buy']) / stock['last_buy']
 		if(info):
 			print(datetime.now().strftime("%H:%M:%S"), "ACTION: SELL", stock['name'], stock['transaction_size'], buy, '{:.1%}'.format(result_per), round(result_eur, 2), reason, "total", round(last_total, 2))
-		
+
 		post_to_toilet(datetime.now().strftime("%H:%M:%S"), "SELL", stock['name'], stock['transaction_size'], buy)
 
 		if(not dry_run):

@@ -20,20 +20,27 @@ def set_new_params(p, index):
 	p['sma_len']	= bp[index][6]
 	p['rsi_len']	= bp[index][7]
 	p['rsi_lim']	= bp[index][8]	
+	p['hh_win'] 	= bp[index][9]
+	p['hh_peaks'] 	= bp[index][10]
+
 	print("parametrized set", index)
 	return p
 
 def randomize_params(p):
 	#p['cci_up'] 	=  random.uniform( 165,  175)
-	p['cci_down'] 	=  random.uniform(-162, -112)
+	#p['cci_down'] 	=  random.uniform(-162, -112)
 	#p['target'] 	=  random.uniform( 0.675,  1.025)
 	#p['hard'] 	=  random.uniform(-0.55, -0.35)
 	#p['trailing'] 	=  random.uniform(-0.5, -0.4)
-	p['cci_window'] =  int(random.uniform(46, 120))
+	#p['cci_window'] =  int(random.uniform(46, 120))
 	#p['sma_len'] 	=  int(random.uniform(181, 191))
 	#p['rsi_len'] 	=  int(random.uniform(191, 201))
 	#p['rsi_lim'] 	=  int(random.uniform(32, 46))
-
+	p['hh_peaks']  += 1
+	if(p['hh_peaks'] > 30):
+		p['hh_peaks'] = 5
+		p['hh_win']   += 1
+	
 	print("randomized")
 	return p
 
@@ -43,22 +50,28 @@ def init():
 
 	techs = [calc_sma,
 		 calc_rsi,
-		 calc_cci]
+		 calc_cci,
+		 calc_peaks,
+		]
 
 	algos = [algo_rsi_trigger,
 		 algo_cci_trigger,
+		 #algo_higher_highs,
 		 algo_hard_stoploss,
 		 algo_trailing_stoploss,
-		 algo_reach_target]
+		 algo_reach_target,
+		]
 		 
 	p = set_new_params(OrderedDict(), 0)
 	return p
 
 def get_backtest_params():
-	# 	cci_up   	cci_down 	target		hard		trailing 	cci_w	sma	rsi_len	rsi_lim
+	# 	cci_up   	cci_down 	target		hard		trailing 	cci_w	sma	rsi_len	rsi_lim hh_win	hh_peaks
 	backtest_params = (
 		# 5d tests
-		(170,		-147,		0.875,		-0.45000,	-0.6000,	 81,	186, 	196, 	34), # dive-in
+		(170,		-147,		0.875,		-0.45000,	-0.6000,	 81,	186, 	196, 	34,	10,	4),
+		#(170,		-147,		0.875,		-0.45000,	-0.6000,	 81,	186, 	196, 	34,	100,	24),
+		#(170,		-147,		0.875,		-0.45000,	-0.6000,	 81,	186, 	196, 	34), # dive-in
 		#(170,		-147,		0.97651,	-0.40920,	-0.40920,	 81,	186, 	196, 	34), # dive-in
 		#(171.64886,	-146.34588,	0.97651,	-0.40920,	-0.40920,	 81,	186, 	196, 	34), # 
 		#(168.59650,	-146.02200,	0.97651,	-0.40920,	-0.40920,	 81,	186, 	196, 	34), # rsitest
@@ -94,18 +107,16 @@ def algo_cci_trigger(stock, index, algo_params):
 
 	if(index > SMA_LONG):
 		if(not stock['active_position']):
-			if(stock['cci_series'][-2] < algo_params['cci_down'] and
-				stock['cci_series'][-1] >= algo_params['cci_down'] and
-				stock['rsi_series'][-1] > 50):
+			if((stock['cci_series'][-2] < algo_params['cci_down']) and (stock['cci_series'][-1] >= algo_params['cci_down']) and
+			   stock['rsi_series'][-1] > 50):
 				if(buy > stock['sma_series_long'][-1] and
 					not stock['no_buy']):
 					reason = "cci_buy"
 					flip = 1
 
 		if(stock['active_position']):
-			if(stock['cci_series'][-2] > algo_params['cci_up'] and
-				stock['cci_series'][-1] <= algo_params['cci_up'] and
-				stock['rsi_series'][-1] < 50):
+			if((stock['cci_series'][-2] > algo_params['cci_up']) and (stock['cci_series'][-1] <= algo_params['cci_up']) and
+			   stock['rsi_series'][-1] < 50):
 				if(buy < float(stock['sma_series_long'][-1])):
 					reason = "cci_sell"
 					flip = -1
@@ -160,36 +171,48 @@ def algo_reach_target(stock, index, algo_params):
 
 	return flip, reason
 
+def algo_higher_highs(stock, index, algo_params):
+	flip = 0
+	reason = ""
+	SMA_LONG = algo_params['sma_len']
+	PEAK_COUNT = algo_params['hh_peaks']
+	PEAK_WINDOW = algo_params['hh_win']
+
+	buy  = float(stock['buy_series'][-1])
+	
+	hh_count = stock['hh'][-PEAK_WINDOW:].count(1)
+	stock['hh_sma'].append(hh_count)
+	if(hh_count >= PEAK_COUNT):
+		if(index > SMA_LONG):
+			flip = -1
+			reason = 'hh'
+	
+
+	return flip, reason
+
 
 def calc_hurst_exponent(stock, index, algo_params):
-	'''
 	hh = 0
 	H = 0
 
 	if(index > 100):
-		H, c, val = compute_Hc(stock['buy_series'][-200:])
-		if(H < 0.5):
-			text = "Mean reverting"
-		elif(H == 0.5):
-			text = "Brownian motion"
-		elif(H > 0.5):
-			text = "Trending"
-		print(text, "{:.4f}".format(H))
+		H, c, val = compute_Hc(stock['buy_series'][-100:])
 		stock['hurst'].append(H)
 	else:
 		stock['hurst'].append(0.5)
 	
+	stock['hurst_sma'].append(np.mean(stock['hurst'][-20:]))
 	return 0, ''
-	'''
 
-def calc_sma(stock, algo_params):
+
+def calc_sma(stock, index, algo_params):
 	SMA_SHORT = 40
 	SMA_LONG = algo_params['sma_len']
 
 	stock['sma_series_short'].append(np.mean(stock['buy_series'][-SMA_SHORT:]))
 	stock['sma_series_long'].append(np.mean(stock['buy_series'][-SMA_LONG:]))
 
-def calc_rsi(stock, algo_params):
+def calc_rsi(stock, index, algo_params):
 	RSI_WINDOW = algo_params['rsi_len']
 
 	gains = []
@@ -223,7 +246,7 @@ def calc_rsi(stock, algo_params):
 	stock['rsi_series'].append(rsi)
 
 
-def calc_cci(stock, algo_params):
+def calc_cci(stock, index, algo_params):
 	p_max = np.max(stock['sell_series'][-algo_params['cci_window']:])
 	p_min = np.min(stock['sell_series'][-algo_params['cci_window']:])
 	p_clo = float(stock['sell_series'][-1])
@@ -237,15 +260,27 @@ def calc_cci(stock, algo_params):
 	else:
 		stock['cci_series'].append(0)
 
+def calc_peaks(stock, index, algo_params):
+	PEAK_WINDOW = algo_params['hh_win']
+	buy = stock['buy_series'][-1]
+	if(index > 200):
+		window = stock['buy_series'][-PEAK_WINDOW:-1]
+		max = np.max(window)
+		if(buy > max):
+			stock['hh'].append(1)
+		else:
+			stock['hh'].append(0)
+	
 
 def check_signals(stock, index, algo_params):
 	global algos
+
 	flip = 0
 	reason = ""
 
 	# calculate all technicals
 	for tech in techs:
-		tech(stock, algo_params)
+		tech(stock, index, algo_params)
 	
 	# loop through all algos
 	for algo in algos:
