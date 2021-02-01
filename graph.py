@@ -76,13 +76,13 @@ def draw_rsi(lng, shrt):
 	ax4.plot(shrt, color="steelblue", label = "rsi_series (bear)")
 	ax4.legend(loc="upper left")
 
-def draw_hh(lng, shrt):
+def draw_test(test1, test2):
 	global ax5
 
 	ax5.clear()
-	#ax5.axhline(y= 0.5, color='green', linestyle='dotted')
-	ax5.plot(lng,  color="olivedrab", label = "test")
-	ax5.plot(shrt, color="steelblue", label = "test")
+	#ax5.axhline(y= 0, color='green', linestyle='dotted')
+	ax5.plot(test1,  color="olivedrab", label = "test")
+	ax5.plot(test2, color="steelblue", label = "test")
 	ax5.legend(loc="upper left")
 
 
@@ -97,15 +97,16 @@ def draw(stocks):
 		if(stock['type'] == 'long'):
 			cci_lng  = stock['cci_series']
 			rsi_lng  = stock['rsi_series']
-			#hh_lng   = stock['hh']
+			test1   = stock['test']
 		else:
 			cci_shrt = stock['cci_series']
 			rsi_shrt = stock['rsi_series']
-			#hh_shrt  = stock['hh']
-			
+			test2   = stock['test']		
+
+
+	draw_test(test1, test2)						
 	draw_cci(cci_lng, cci_shrt)
 	draw_rsi(rsi_lng, rsi_shrt)
-	#draw_hh(hh_lng, hh_shrt)
 	plt.draw()
 	plt.pause(0.0001)
 

@@ -4,13 +4,21 @@ import math
 import numpy as np
 import scipy
 
+from common import optimizer_results_stats, optimizer_results_algos
+
 #from hurst import compute_Hc
 
 algos = []
 techs = []
 
+optimizer_window =   2
+optimizer_steps  =  50
+optimizer_runs   =  -1
+optimizer_param  =   0
+
 def set_new_params(p, index):
 	bp = get_backtest_params()
+
 	p['cci_up'] 	= bp[index][0]
 	p['cci_down'] 	= bp[index][1]
 	p['target']	= bp[index][2]
@@ -26,22 +34,67 @@ def set_new_params(p, index):
 	print("parametrized set", index)
 	return p
 
+def param_switcher(argument):
+    	switcher = {
+		0: 'cci_up',
+		1: 'cci_down',
+		2: 'target',
+		3: 'hard',
+		4: 'trailing',
+		5: 'cci_window',
+		6: 'sma_len',
+		7: 'rsi_len',
+		8: 'rsi_lim',
+	    }
+    	return switcher.get(optimizer_param, 'invalid')
+
 def randomize_params(p):
-	#p['cci_up'] 	=  random.uniform( 165,  175)
-	#p['cci_down'] 	=  random.uniform(-162, -112)
-	#p['target'] 	=  random.uniform( 0.675,  1.025)
-	#p['hard'] 	=  random.uniform(-0.55, -0.35)
-	#p['trailing'] 	=  random.uniform(-0.5, -0.4)
-	#p['cci_window'] =  int(random.uniform(46, 120))
-	#p['sma_len'] 	=  int(random.uniform(181, 191))
-	#p['rsi_len'] 	=  int(random.uniform(191, 201))
-	#p['rsi_lim'] 	=  int(random.uniform(32, 46))
-	p['hh_peaks']  += 1
-	if(p['hh_peaks'] > 30):
-		p['hh_peaks'] = 5
-		p['hh_win']   += 1
+	global optimizer_runs
+	global optimizer_param
+	global optimizer_steps
+
+	# If param optimizing run is done, change to optimal value, move to next
+	if(optimizer_runs == optimizer_steps):
+		seq = [x['result_eur'] for x in optimizer_results_stats]
+		best_run_idx = seq.index(max(seq))
+		param_name  = param_switcher(optimizer_param)
+		p[param_name] = optimizer_results_algos[best_run_idx][param_name]
+		optimizer_runs = -1
+		optimizer_param += 1
 	
-	print("randomized")
+	optimizer_runs += 1
+
+	param_name  = param_switcher(optimizer_param)
+	if(param_name == 'invalid'):
+		print("done")
+		quit()
+
+	param_value = get_backtest_params()[0][optimizer_param]
+	
+	if(param_value > 0):
+		win_min  = param_value * (float(100 - optimizer_window)/100)
+		win_max  = param_value * (1 + float(optimizer_window)/100)
+		win_size = win_max - win_min
+		win_step = win_size / optimizer_steps
+	else:
+		win_min  = param_value * (1 + float(optimizer_window)/100)
+		win_max  = param_value * (float(100 - optimizer_window)/100)
+		win_size = win_min - win_max
+		win_step = -win_size / optimizer_steps
+
+	if(optimizer_param == 5 or
+	   optimizer_param == 6 or
+	   optimizer_param == 7):
+		p[param_name] = int(win_min + (optimizer_runs * win_step))
+	else:
+		p[param_name] = round(float(win_min + (optimizer_runs * win_step)), 3)
+
+
+	print(  "optimizer running now",    optimizer_runs,
+		"/",     optimizer_steps,   param_name, p[param_name],
+		"range", round(win_min, 3), round(win_max, 3), round(win_step, 3),)
+	print("---")
+	
 	return p
 
 def init():
@@ -56,6 +109,7 @@ def init():
 
 	algos = [algo_rsi_trigger,
 		 algo_cci_trigger,
+		 #algo_bias,
 		 #algo_higher_highs,
 		 algo_hard_stoploss,
 		 algo_trailing_stoploss,
@@ -66,18 +120,22 @@ def init():
 	return p
 
 def get_backtest_params():
-	# 	cci_up   	cci_down 	target		hard		trailing 	cci_w	sma	rsi_len	rsi_lim hh_win	hh_peaks
+	# 	cci_up   	cci_down 	target		hard		trailing 	cci_w	sma_len	rsi_len	rsi_lim hh_win	hh_peaks
 	backtest_params = (
 		# 5d tests
-		(170,		-147,		0.875,		-0.45000,	-0.6000,	 81,	186, 	196, 	34,	10,	4),
-		#(170,		-147,		0.875,		-0.45000,	-0.6000,	 81,	186, 	196, 	34,	100,	24),
-		#(170,		-147,		0.875,		-0.45000,	-0.6000,	 81,	186, 	196, 	34), # dive-in
-		#(170,		-147,		0.97651,	-0.40920,	-0.40920,	 81,	186, 	196, 	34), # dive-in
-		#(171.64886,	-146.34588,	0.97651,	-0.40920,	-0.40920,	 81,	186, 	196, 	34), # 
-		#(168.59650,	-146.02200,	0.97651,	-0.40920,	-0.40920,	 81,	186, 	196, 	34), # rsitest
-		#(171.64886,	-146.34588,	0.97651,	-0.40920,	-0.40920,	 80,	194, 	194, 	35), # rsitest
-		#(171.64886,	-146.34588,	0.97651,	-0.40920,	-0.40920,	 80,	194, 	259, 	35), 
-		#(100,		-100	,	0.97651,	-0.40950,	-0.34290,	 102,	102, 	102, 	5), # testing rsi+csi
+		(168.800,	-145.883,	0.924,		-0.471,		-0.6000, 	81,	187, 	194, 	34.987,	10,	4), # 2.with new optimizer
+		#(157.267,	-146.000,	0.858,		-0.487,		-0.60,	 	81,	187, 	194, 	34.987,	10,	4), # 1.with new optimizer
+		#(170,		-146,		0.875,		-0.50,		-0.60,	 	81,	187, 	196, 	32,	10,	4),
+		#(170,		-146,		0.875,		-0.45,		-0.60,	 	81,	187, 	196, 	32,	10,	4),
+		#(170,		-147,		0.875,		-0.45,		-0.60,	 	81,	186, 	196, 	34,	10,	4),
+		#(170,		-147,		0.875,		-0.45000,	-0.6000,	81,	186, 	196, 	34,	100,	24),
+		#(170,		-147,		0.875,		-0.45000,	-0.6000,	81,	186, 	196, 	34), # dive-in
+		#(170,		-147,		0.97651,	-0.40920,	-0.40920,	81,	186, 	196, 	34), # dive-in
+		#(171.64886,	-146.34588,	0.97651,	-0.40920,	-0.40920,	81,	186, 	196, 	34), # 
+		#(168.59650,	-146.02200,	0.97651,	-0.40920,	-0.40920,	81,	186, 	196, 	34), # rsitest
+		#(171.64886,	-146.34588,	0.97651,	-0.40920,	-0.40920,	80,	194, 	194, 	35), # rsitest
+		#(171.64886,	-146.34588,	0.97651,	-0.40920,	-0.40920,	80,	194, 	259, 	35), 
+		#(100,		-100,	0.97651,	-0.40950,	-0.34290,	102,	102, 	102, 	5), # testing rsi+csi
 	)
 	return backtest_params
 
@@ -93,7 +151,11 @@ def algo_rsi_trigger(stock, index, algo_params):
 		   not stock['no_buy']):
 			flip = 1
 			reason = 'rsi'
-
+		'''
+		if(stock['rsi_series'][-2] > (100 - RSI_LIMIT) and stock['rsi_series'][-1] < (100 - RSI_LIMIT)):
+			flip = -1
+			reason = 'rsi'
+		'''
 	return flip, reason
 
 
@@ -108,15 +170,13 @@ def algo_cci_trigger(stock, index, algo_params):
 	if(index > SMA_LONG):
 		if(not stock['active_position']):
 			if((stock['cci_series'][-2] < algo_params['cci_down']) and (stock['cci_series'][-1] >= algo_params['cci_down']) and
-			   stock['rsi_series'][-1] > 50):
-				if(buy > stock['sma_series_long'][-1] and
-					not stock['no_buy']):
+			    stock['rsi_series'][-1] > 50):
+				if(buy > stock['sma_series_long'][-1] and not stock['no_buy']):
 					reason = "cci_buy"
 					flip = 1
 
 		if(stock['active_position']):
-			if((stock['cci_series'][-2] > algo_params['cci_up']) and (stock['cci_series'][-1] <= algo_params['cci_up']) and
-			   stock['rsi_series'][-1] < 50):
+			if((stock['cci_series'][-2] > algo_params['cci_up']) and (stock['cci_series'][-1] <= algo_params['cci_up'])):
 				if(buy < float(stock['sma_series_long'][-1])):
 					reason = "cci_sell"
 					flip = -1
@@ -187,6 +247,57 @@ def algo_higher_highs(stock, index, algo_params):
 			flip = -1
 			reason = 'hh'
 	
+
+	return flip, reason
+
+def algo_bias(stock, index, algo_params):
+	flip = 0
+	reason = ""
+
+	bias = 0
+
+	if(index > 0):
+		'''
+		if(stock['buy_series'][-1] > stock['sma_series_short'][-1]):
+			bias += 1
+		else:
+			bias -= 1
+
+		if(stock['buy_series'][-1] > np.max(stock['buy_series'][-10:-2])):
+			bias += 1
+		else:
+			bias -= 1
+
+		if(stock['buy_series'][-1] > stock['buy_series'][-2] and
+			stock['buy_series'][-2] > stock['buy_series'][-3] ):
+			bias += 1
+		elif(stock['buy_series'][-1] < stock['buy_series'][-2] and
+			stock['buy_series'][-2] < stock['buy_series'][-3] ):
+			bias -= 1
+		
+		if(stock['rsi_series'][-1] > 50):
+			bias += 1
+		else:
+			bias -= 1
+		'''
+		
+		if((stock['cci_series'][-2] < algo_params['cci_down']) and (stock['cci_series'][-1] >= algo_params['cci_down'])):
+			bias += 1
+		elif((stock['cci_series'][-2] > algo_params['cci_up']) and (stock['cci_series'][-1] <= algo_params['cci_up'])):
+			bias -= 1
+		
+		if((stock['cci_series'][-1] > algo_params['cci_up'])):
+			bias += 1
+		elif((stock['cci_series'][-1] < algo_params['cci_down'])):
+			bias -= 1
+
+		stock['bias'].append(bias)
+		stock['bias_sma'].append(np.mean(stock['bias'][-10:]))
+
+	if(index > 100):
+		if(stock['bias_sma'] >= 1):
+			flip = 1
+			reason = "bias"
 
 	return flip, reason
 

@@ -7,6 +7,7 @@ from selenium.webdriver.support.ui import Select
 import requests
 import numpy as np
 import math
+import random
 import time
 import json
 import getopt
@@ -15,6 +16,9 @@ from datetime import datetime
 
 import settings
 import online
+
+optimizer_results_stats = []
+optimizer_results_algos = []
 
 g_closed_deals = []
 stats = {}
@@ -25,9 +29,17 @@ stats['profit_factor'] = 0
 stats['result_eur'] = 0
 stats['result_per'] = 0
 
-def init_stocks(algo_params, file):
-	print("open stocks file", file)
-	with open(file, 'r') as f:
+options = {}
+options['inputfile']   = ''
+options['outputfile']  = 'guru99.txt'
+options['do_graph']    = False
+options['do_actions']  = False
+options['dry_run']     = False
+options['do_optimize'] = False
+
+def init_stocks(algo_params, options):
+	#print("open stocks file", options['inputfile'])
+	with open(options['inputfile'], 'r') as f:
 		stocks = json.load(f)
 
 	for stock in stocks:
@@ -46,6 +58,9 @@ def init_stocks(algo_params, file):
 		stock['hurst'] = []
 		stock['hh'] = []
 		stock['hh_sma'] = []
+		stock['bias'] = []
+		stock['bias_sma'] = []
+		stock['test'] = []
 		stock['signals_list_sell'] = []
 		stock['signals_list_buy'] = []
 		stock['browser'] = 0
@@ -100,6 +115,7 @@ def calc_stats(closed_deals):
 		stats['all_sells']  = all_sells
 		stats['result_eur'] =  all_sells - all_buys
 		stats['result_per'] = (all_sells - all_buys) / all_buys
+		stats['deals'] = len(closed_deals)
 	else:
 		stats['sharpe']        = 0
 		stats['profit_factor'] = 0
@@ -108,13 +124,14 @@ def calc_stats(closed_deals):
 		stats['all_sells']     = 0
 		stats['result_eur']    = 0
 		stats['result_per']    = 0
+		stats['deals'] 	       = 0
 
 	return stats
 
 def count_stats(final, stocks, last_total, grand_total, closed_deals, algo_params):
 	global g_closed_deals
 	global stats
-
+	global optimizer_results
 	g_closed_deals.extend(closed_deals)
 
 	stats = calc_stats(closed_deals)
@@ -137,6 +154,18 @@ def count_stats(final, stocks, last_total, grand_total, closed_deals, algo_param
 
 		print(id, '{:.2%}'.format(stats['result_per']), round(stats['result_eur'], 2), len(g_closed_deals), round(stats['sharpe'], 2), round(stats['profitability'], 2), round(stats['profit_factor'], 2), algo_params)
 		print
+		s = stats.copy()
+		a = algo_params.copy()
+		optimizer_results_stats.append(s)
+		optimizer_results_algos.append(a)
+
+		seq = [x['result_eur'] for x in optimizer_results_stats]
+		best_run_idx = seq.index(max(seq))
+		
+		print("####### BEST SO FAR", optimizer_results_stats[best_run_idx])
+		print("#######            ", optimizer_results_algos[best_run_idx])
+		print
+
 		del g_closed_deals[:]
 		first_time = True
 		stats['days'] = 0
@@ -157,7 +186,7 @@ def post_to_toilet(time, action, name, amount, price):
 		resp = requests.post(url, json=data)
 		print resp
 
-def do_transaction(stock, flip, reason, money, last_total, closed_deals, algo_params, index, info, dry_run):
+def do_transaction(stock, flip, reason, money, last_total, closed_deals, algo_params, index, options):
 	buy  = float(stock['buy_series'][-1])
 	sell = float(stock['sell_series'][-1])
 
@@ -173,13 +202,13 @@ def do_transaction(stock, flip, reason, money, last_total, closed_deals, algo_pa
 		if(stock['buy_full_money'] == True):
 			stock['transaction_size'] = int(stock['transaction_money'] / sell)
 
-		if(info):
+		if(options['do_actions']):
 			print(datetime.now().strftime("%H:%M:%S"), "ACTION: BUY ", stock['name'], stock['transaction_size'], stock['last_buy'], reason)
 
 		post_to_toilet(datetime.now().strftime("%H:%M:%S"), "BUY", stock['name'], stock['transaction_size'], stock['last_buy'])
 
 		stock['stocks'] = stock['transaction_size']
-		if(not dry_run):
+		if(not options['dry_run']):
 			online.execute_buy_order_online(stock)
 
 		
@@ -195,12 +224,12 @@ def do_transaction(stock, flip, reason, money, last_total, closed_deals, algo_pa
 		stock['signals_list_sell'].append((index, stock['buy_series'][-1]))
 		result_eur = stock['stocks']*(buy - stock['last_buy'])
 		result_per = (buy - stock['last_buy']) / stock['last_buy']
-		if(info):
+		if(options['do_actions']):
 			print(datetime.now().strftime("%H:%M:%S"), "ACTION: SELL", stock['name'], stock['transaction_size'], buy, '{:.1%}'.format(result_per), round(result_eur, 2), reason, "total", round(last_total, 2))
 
 		post_to_toilet(datetime.now().strftime("%H:%M:%S"), "SELL", stock['name'], stock['transaction_size'], buy)
 
-		if(not dry_run):
+		if(not options['dry_run']):
 			online.execute_sell_order_online(stock)
 
 		stock['stocks'] = 0
@@ -213,7 +242,7 @@ def do_transaction(stock, flip, reason, money, last_total, closed_deals, algo_pa
 	return money, last_total
 
 
-def store_stock_values(stocks, index, file):
+def store_stock_values(stocks, index, options):
 	do_write = True
 	for stock in stocks:
 		if(stock['store_to_file'] == False):
@@ -227,21 +256,17 @@ def store_stock_values(stocks, index, file):
 
 	# store
 	if(do_write):
-		f = open(file,"a+")
+		f = open(options['outputfile'],"a+")
 		f.write(str((buy_long, sell_long, buy_short, sell_short)) + '\n')
 		f.close()
 
 
 
 def check_args(argv):
-	inputfile = ''
-	outputfile = 'guru99.txt'
-	do_graph = False
-	do_actions = False
-	dry_run = False
-
+	global options
+	
 	try:
-		opts, args = getopt.getopt(argv[1:],"hgdai:o:", ["dry-run"])
+		opts, args = getopt.getopt(argv[1:],"hgdazi:o:", ["dry-run"])
 	except getopt.GetoptError:
 		print 'test.py -i <inputfile> -o <outputfile>'
 		sys.exit(2)
@@ -250,18 +275,20 @@ def check_args(argv):
 			print argv[0], '-i <inputfile> -o <outputfile>'
 			sys.exit()
 		elif opt in ("-i"):
-			inputfile = arg
+			options['inputfile'] = arg
 		elif opt in ("-o"):
-			outputfile = arg
+			options['outputfile'] = arg
 		elif opt in ("-g"):
-			do_graph = True
+			options['do_graph'] = True
 		elif opt in ("-a"):
-			do_actions = True
+			options['do_actions'] = True
+		elif opt in ("-z"):
+			options['do_optimize'] = True
 		elif opt in ("-d", "--dry-run"):
-			dry_run = True
+			options['dry_run'] = True
 
-	if(inputfile == ''):
+	if(options['inputfile'] == ''):
 			print argv[0], '-i <inputfile> -o <outputfile>'
 			sys.exit()
 
-	return dry_run, inputfile, outputfile, do_graph, do_actions
+	return options

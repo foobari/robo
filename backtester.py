@@ -52,8 +52,8 @@ def get_backtest_data(file):
 filenames = []
 file_index, best_total, param_set_index = 0, 0, 0
 
-dry_run, i_file, o_file, do_graph, do_actions = common.check_args(sys.argv)
-dry_run = True
+options = common.check_args(sys.argv)
+options['dry_run'] = True
 
 s = settings.init('settings_backtester.json')
 alg = algo.init()
@@ -65,7 +65,7 @@ if(s['cycle_params']):
 if(s['randomize']):
 	alg = algo.randomize_params(alg)
 
-if(do_graph):
+if(options['do_graph']):
 	graph.init()
 
 # get file(s)
@@ -74,7 +74,7 @@ filenames = get_backtest_files(s['file_dir'], s['file_name'])
 while(True):
 	closed_deals = []
 	index, money, last_total = 0, 0, 0
-	stocks = common.init_stocks(alg, i_file)
+	stocks = common.init_stocks(alg, options)
 
 	if(file_index < len(filenames)):
 		backtest_data, entries = get_backtest_data(filenames[file_index])
@@ -117,11 +117,10 @@ while(True):
 									closed_deals,
 									alg,
 									index,
-									do_actions,
-									dry_run)
+									options)
 
 		# graph
-		if(do_graph and (index % s['graph_update_interval'] == 0)):
+		if(options['do_graph'] and (index % s['graph_update_interval'] == 0)):
 			graph.draw(stocks)
 
 		index = index + 1

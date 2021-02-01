@@ -4,5 +4,5 @@
 	"cycle_params": false,
 	"one_shot": true,
 	"file_dir": "/home/foobari/src/robogit/robo/backtest/",
-	"file_name": "data_*2501*"
+	"file_name": "data_*2020*.dat"
 }

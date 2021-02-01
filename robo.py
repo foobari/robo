@@ -30,12 +30,12 @@ index, money, last_total, best_total = 0, 0, 0, 0
 
 closed_deals = []	
  
-dry_run, i_file, o_file, do_graph, do_actions = common.check_args(sys.argv)
+options = common.check_args(sys.argv)
 
 alg  	= algo.init()
 print alg
 sett 	= settings.init('settings_robo.json')
-stocks 	= common.init_stocks(alg, i_file)
+stocks 	= common.init_stocks(alg, options)
 is_last = False
 
 for stock in stocks:
@@ -49,7 +49,7 @@ while(datetime.now() < datetime.now().replace(hour = 9, minute = 15)):
 with open('credentials.json', 'r') as f:
 	creds = json.load(f)
 
-if(do_graph):
+if(options['do_graph']):
 	graph.init()
 
 # here we go, login to Nordnet
@@ -70,11 +70,12 @@ while(not is_last):
 		continue
 	
 	# store to file
-	common.store_stock_values(stocks, index, o_file)
+	common.store_stock_values(stocks, index, options)
 
 	# check signals, do transactions
 	for stock in stocks:
 		if(datetime.now() > datetime.now().replace(hour = 20, minute = 50)):
+			print("Day end, closing open positions and exit")
 			is_last = True
 			flip = -1
 			reason = 'day_close'
@@ -91,10 +92,9 @@ while(not is_last):
 								  closed_deals,
 								  alg,
 								  index,
-								  do_actions,
-								  dry_run)
+								  options)
 	# graph
-	if(do_graph and (index % sett['graph_update_interval'] == 0)):
+	if(options['do_graph'] and (index % sett['graph_update_interval'] == 0)):
 		graph.draw(stocks)
 
 	# refresh after every 30 ticks / ~5min
