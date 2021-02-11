@@ -52,11 +52,14 @@ def draw_cci(lng, shrt):
 	bp = algo.get_backtest_params()
 	cci_u = bp[0][0]
 	cci_d = bp[0][1]
+	cci_b = bp[0][9]
 
 	ax3.clear()
-	ax3.set(ylim=(-250, 250))
+	ax3.set(ylim=(-330, 330))
 	ax3.axhline(y=  cci_u, color='red', label = "cci up", linestyle='dotted')
 	ax3.axhline(y=  cci_d, color='green', label = "cci down", linestyle='dotted')
+	ax3.axhline(y= -cci_b, color='brown', label = "cci down", linestyle='dotted')
+	ax3.axhline(y=  cci_b, color='brown', label = "cci down", linestyle='dotted')
 	ax3.plot(lng,  color="olivedrab", label = "cci_series (bull)")
 	ax3.plot(shrt, color="steelblue", label = "cci_series (bear)")
 	ax3.legend(loc="upper left")
@@ -76,13 +79,16 @@ def draw_rsi(lng, shrt):
 	ax4.plot(shrt, color="steelblue", label = "rsi_series (bear)")
 	ax4.legend(loc="upper left")
 
-def draw_test(test1, test2):
+def draw_test(test1, test2, test3):
 	global ax5
 
 	ax5.clear()
+	#ax5.set(ylim=( -0.05, 0.05))
 	#ax5.axhline(y= 0, color='green', linestyle='dotted')
-	ax5.plot(test1,  color="olivedrab", label = "test")
-	ax5.plot(test2, color="steelblue", label = "test")
+	ax5.plot(test1, color="olivedrab", label = "test")
+	ax5.plot(test2, color="olivedrab", label = "test")
+	#ax5.plot(test2, color="steelblue", label = "test")
+	ax5.plot(test3, color="brown", label = "test")
 	ax5.legend(loc="upper left")
 
 
@@ -97,14 +103,15 @@ def draw(stocks):
 		if(stock['type'] == 'long'):
 			cci_lng  = stock['cci_series']
 			rsi_lng  = stock['rsi_series']
-			test1   = stock['test']
+			test1 = stock['bb_upper']
+			test2 = stock['bb_lower']
+			test3 = stock['bb_spread']
+
 		else:
 			cci_shrt = stock['cci_series']
 			rsi_shrt = stock['rsi_series']
-			test2   = stock['test']		
 
-
-	draw_test(test1, test2)						
+	draw_test(test1, test2, test3)
 	draw_cci(cci_lng, cci_shrt)
 	draw_rsi(rsi_lng, rsi_shrt)
 	plt.draw()

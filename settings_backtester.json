@@ -1,8 +1,8 @@
 {
 	"graph_update_interval": 50,
 	"randomize": false,
-	"cycle_params": false,
-	"one_shot": true,
+	"cycle_params": true,
+	"one_shot": false,
 	"file_dir": "/home/foobari/src/robogit/robo/backtest/",
-	"file_name": "data_*2020*.dat"
+	"file_name": "data*.dat"
 }

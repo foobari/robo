@@ -20,6 +20,9 @@ import online
 optimizer_results_stats = []
 optimizer_results_algos = []
 
+#result parameter to optimize to
+optimizer_param_to_optimize = 'result_eur'
+
 g_closed_deals = []
 stats = {}
 stats['sharpe'] = 0
@@ -60,7 +63,23 @@ def init_stocks(algo_params, options):
 		stock['hh_sma'] = []
 		stock['bias'] = []
 		stock['bias_sma'] = []
+		stock['macd_line'] = []
+		stock['macd_signal'] = []
+		stock['macd_histogram'] = []
+		stock['stochastic_d'] = []
+		stock['stochastic_k'] = []
 		stock['test'] = []
+		stock['test_sma'] = []
+		stock['bb_upper'] = []
+		stock['bb_lower'] = []
+		stock['bb_spread'] = []
+		stock['bb_spread_dev'] = []
+		stock['tr'] = []
+		stock['kc_typ'] = []
+		stock['kc_upper'] = []
+		stock['kc_lower'] = []
+		stock['squeeze'] = []
+		stock['squeeze_val'] = []
 		stock['signals_list_sell'] = []
 		stock['signals_list_buy'] = []
 		stock['browser'] = 0
@@ -150,7 +169,7 @@ def count_stats(final, stocks, last_total, grand_total, closed_deals, algo_param
 		elif((stats['sharpe'] >= 1.0) and ((len(g_closed_deals) / stats['days']) >= 0.75)):
 			id = "T1:"
 		else:
-			id = "T: "
+			id = "T0:"
 
 		print(id, '{:.2%}'.format(stats['result_per']), round(stats['result_eur'], 2), len(g_closed_deals), round(stats['sharpe'], 2), round(stats['profitability'], 2), round(stats['profit_factor'], 2), algo_params)
 		print
@@ -159,12 +178,12 @@ def count_stats(final, stocks, last_total, grand_total, closed_deals, algo_param
 		optimizer_results_stats.append(s)
 		optimizer_results_algos.append(a)
 
-		seq = [x['result_eur'] for x in optimizer_results_stats]
+		seq = [x[optimizer_param_to_optimize] for x in optimizer_results_stats]
 		best_run_idx = seq.index(max(seq))
 		
 		print("####### BEST SO FAR", optimizer_results_stats[best_run_idx])
-		print("#######            ", optimizer_results_algos[best_run_idx])
-		print
+		print("#######                             ", optimizer_results_algos[best_run_idx])
+		print 
 
 		del g_closed_deals[:]
 		first_time = True
