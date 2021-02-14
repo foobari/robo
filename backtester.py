@@ -119,6 +119,37 @@ while(True):
 									index,
 									options)
 
+		# cross check
+		
+		for stock in stocks:
+			if(stock['type'] == 'long'):
+				cc_long = stock
+			elif(stock['type'] == 'short'):
+				cc_short = stock
+
+		if(cc_short['active_position'] and cc_long['flip'] == 1):
+				money, last_total = common.do_transaction(cc_short,
+									-1,
+									"cross",
+									money,
+									last_total,
+									closed_deals,
+									alg,
+									index,
+									options)
+
+		if(cc_long['active_position'] and cc_short['flip'] == 1):
+				money, last_total = common.do_transaction(cc_long,
+									-1,
+									"cross",
+									money,
+									last_total,
+									closed_deals,
+									alg,
+									index,
+									options)
+		
+
 		# graph
 		if(options['do_graph'] and (index % s['graph_update_interval'] == 0)):
 			graph.draw(stocks)

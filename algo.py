@@ -1,3 +1,4 @@
+# -*- coding: iso-8859-15 -*-
 from collections import OrderedDict
 import random
 import math
@@ -73,9 +74,9 @@ def randomize_params(p):
 		params_idx = random.sample(params_idx, len(params_idx))
 		print "Randomized order", params_idx
 
-		optimizer_window =  int(random.uniform(1, 50))
+		optimizer_window =  int(random.uniform(1, 30))
 		optimizer_steps  =  int(random.uniform(5, 20))
-		print "Randomized window, steps", optimizer_window, optimizer_steps
+		print "Randomized window: ±", optimizer_window, "%, steps: ", optimizer_steps
 
 	# If param optimizing run is done, change to optimal value, move to next
 	if(optimizer_runs == optimizer_steps):
@@ -111,9 +112,6 @@ def randomize_params(p):
 		win_size = win_min - win_max
 		win_step = -win_size / optimizer_steps
 
-
-	optimizer_runs += 1
-
 	if(param_names[params_idx[optimizer_param]] == 'cci_window' or
 	   param_names[params_idx[optimizer_param]] == 'sma_len'    or
 	   param_names[params_idx[optimizer_param]] == 'rsi_len'):
@@ -121,12 +119,21 @@ def randomize_params(p):
 	else:
 		p[param_names[params_idx[optimizer_param]]] = round(float(win_min + (optimizer_runs * win_step)), 4)
 
-	print(  "optimizer running now:", optimizer_bigruns, " -> ", 
-		optimizer_param,     len(params_idx) - 1,
+	optimizer_runs += 1
+
+	print('optimizer running now bigrun {:<1d}: param {:<1d}/{:<2d}, run {:<1d}/{:<1d}, {:<4s}: {:<4.2f}, set({:>5.2f},{:>7.2f},{:>5.2f})'.format(
+		optimizer_bigruns, optimizer_param, len(params_idx) - 1,
 		optimizer_runs - 1,  optimizer_steps - 1,
 		param_names[params_idx[optimizer_param]], p[param_names[params_idx[optimizer_param]]],
-		":", round(win_min, 3), round(win_max, 3), round(win_step, 3),)
-	print("---")
+		round(win_min, 3), round(win_max, 3), round(win_step, 3),))
+	print
+
+#('optimizer running now:', 0, ' -> ', 0, 10, 4, 13, 'trailing', -0.5811, ':', -0.585, -0.574, 0.001)
+
+#		print('{:<2s}     |{:>8d}{:>9d}{:>9.2%}{:>8.2f}{:>10.2f}{:>10.2f}{:>16.2f}{:>16.2f}   |{:>8.2f}{:>9.2f}{:>9.2f}{:>7.2f}{:>10.2f}{:>8d}{:>10d}{:>10d}{:>10.2f}{:>10.2f}{:>10.2f}'.format(
+#					id,
+#					stats['days'],
+
 
 	return p
 
@@ -160,11 +167,14 @@ def init():
 	return p
 
 def get_backtest_params():
-	# 	cci_up   	cci_down 	target		hard		trailing 	cci_w	sma_len	rsi_len	rsi_lim cci_big rsi_big
+	# 	cci_up	   cci_down   target    hard   trailing   cci_w	 sma_len  rsi_len   rsi_lim   cci_big   rsi_big
 	backtest_params = (
-		# 5d tests
-		(168.800,	-145.883,	0.924,		-0.471,		-0.5794, 	81,	187, 	194, 	34.987,	317,	39.9),  # optimized for return
-		(195.500,	-145.883,	0.410,		-0.471,		-0.5794, 	81,	163, 	194, 	32.19,	317,	40.08), # optimized for sharpe
+		(165.31,  -149.47,     0.97,  -0.42,     -0.60,    81,   164,     193,      34.93,    223.84,   39.90),
+		#(172.2,   -145.9,     0.924,   -0.373, -0.5794,   81,	 187,     193, 	    34.932,   317,	39.9),  # 36d optimized for return
+		#(172.2,   -145.9,     0.924,   -0.39,  -0.5794,   81,	 187,     193, 	    34.932,   317,	39.9),  # 35d optimized for return
+		
+		#(168.800,	-145.883,	0.924,		-0.471,		-0.5794, 	81,	187, 	194, 	34.987,	317,	39.9),  # optimized for return
+		#(195.500,	-145.883,	0.410,		-0.471,		-0.5794, 	81,	163, 	194, 	32.19,	317,	40.08), # optimized for sharpe
 	)
 	return backtest_params
 
@@ -618,6 +628,7 @@ def check_signals(stock, index, algo_params):
 	# loop through all algos
 	for algo in algos:
 		flip, reason = algo(stock, index, algo_params)
+		stock['flip'] = flip
 		if(flip != 0):
 			return flip, reason
 

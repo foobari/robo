@@ -1,3 +1,4 @@
+# -*- coding: iso-8859-15 -*-
 from lxml import html
 from selenium import webdriver
 from selenium.webdriver.common.by import By
@@ -13,7 +14,6 @@ import json
 import getopt
 import sys
 from datetime import datetime
-
 import settings
 import online
 
@@ -22,6 +22,7 @@ optimizer_results_algos = []
 
 #result parameter to optimize to
 optimizer_param_to_optimize = 'result_eur'
+previous_best_value = -10000
 
 g_closed_deals = []
 stats = {}
@@ -39,6 +40,18 @@ options['do_graph']    = False
 options['do_actions']  = False
 options['dry_run']     = False
 options['do_optimize'] = False
+
+param_names = ['cci_up',
+		'cci_down',
+		'target',
+		'hard',
+		'trailing',
+		'cci_window',
+		'sma_len',
+		'rsi_len',
+		'rsi_lim',
+		'cci_big',
+		'rsi_big']
 
 def init_stocks(algo_params, options):
 	#print("open stocks file", options['inputfile'])
@@ -84,6 +97,7 @@ def init_stocks(algo_params, options):
 		stock['signals_list_buy'] = []
 		stock['browser'] = 0
 		stock['reason'] = ''
+		stock['flip'] = 0
 		stock['no_buy'] = False
 
 		if(stock['active_position'] and (stock['transaction_type'] == 'sell_away')):
@@ -151,6 +165,9 @@ def count_stats(final, stocks, last_total, grand_total, closed_deals, algo_param
 	global g_closed_deals
 	global stats
 	global optimizer_results
+	global param_names
+	global previous_best_value
+
 	g_closed_deals.extend(closed_deals)
 
 	stats = calc_stats(closed_deals)
@@ -161,18 +178,43 @@ def count_stats(final, stocks, last_total, grand_total, closed_deals, algo_param
 
 	if(final):
 		stats = calc_stats(g_closed_deals)
-		print("---------------------------")
 		if((stats['sharpe']   >= 2.8) and ((len(g_closed_deals) / stats['days']) >= 0.75) and stats['result_per'] >= 0.032):
-			id = "T3:"
+			id = "T3"
 		elif((stats['sharpe']   >= 2.0) and ((len(g_closed_deals) / stats['days']) >= 0.75) and stats['result_per'] >= 0.02):
-			id = "T2:"
+			id = "T2"
 		elif((stats['sharpe'] >= 1.0) and ((len(g_closed_deals) / stats['days']) >= 0.75)):
-			id = "T1:"
+			id = "T1"
 		else:
-			id = "T0:"
+			id = "T0"
 
-		print(id, '{:.2%}'.format(stats['result_per']), round(stats['result_eur'], 2), len(g_closed_deals), round(stats['sharpe'], 2), round(stats['profitability'], 2), round(stats['profit_factor'], 2), algo_params)
 		print
+		print("       │    days    deals   profit   eur/d   deals/d    sharpe   profitability   profit_factor   │   cci_u    cci_d   target   hard  trailing   cci_w   sma_len   rsi_len   rsi_lim   cci_big   rsi_big")
+		print("───────┼─────────────────────────────────────────────────────────────────────────────────────────┼─────────────────────────────────────────────────────────────────────────────────────────────────────")
+		print('{:<2s}     │{:>8d}{:>9d}{:>9.2%}{:>8.2f}{:>10.2f}{:>10.2f}{:>16.2f}{:>16.2f}   │{:>8.2f}{:>9.2f}{:>9.2f}{:>7.2f}{:>10.2f}{:>8d}{:>10d}{:>10d}{:>10.2f}{:>10.2f}{:>10.2f}'.format(
+					id,
+					stats['days'],
+					len(g_closed_deals),
+					stats['result_per'],
+					stats['result_eur']/stats['days'],
+					float(stats['deals'])/float(stats['days']),
+					stats['sharpe'],
+					stats['profitability'],
+					stats['profit_factor'],
+					algo_params[param_names[0]],
+					algo_params[param_names[1]],
+					algo_params[param_names[2]],
+					algo_params[param_names[3]],
+					algo_params[param_names[4]],
+					algo_params[param_names[5]],
+					algo_params[param_names[6]],
+					algo_params[param_names[7]],
+					algo_params[param_names[8]],
+					algo_params[param_names[9]],
+					algo_params[param_names[10]]
+		))
+
+
+
 		s = stats.copy()
 		a = algo_params.copy()
 		optimizer_results_stats.append(s)
@@ -180,10 +222,36 @@ def count_stats(final, stocks, last_total, grand_total, closed_deals, algo_param
 
 		seq = [x[optimizer_param_to_optimize] for x in optimizer_results_stats]
 		best_run_idx = seq.index(max(seq))
+
+		indicator = 'best   │'
+		current_best_value = optimizer_results_stats[best_run_idx][optimizer_param_to_optimize]
+		if(current_best_value > previous_best_value):
+			previous_best_value = current_best_value
+			indicator = 'best * │'
 		
-		print("####### BEST SO FAR", optimizer_results_stats[best_run_idx])
-		print("#######                             ", optimizer_results_algos[best_run_idx])
-		print 
+		print('{:<0s}{:>8d}{:>9d}{:>9.2%}{:>8.2f}{:>10.2f}{:>10.2f}{:>16.2f}{:>16.2f}   │{:>8.2f}{:>9.2f}{:>9.2f}{:>7.2f}{:>10.2f}{:>8d}{:>10d}{:>10d}{:>10.2f}{:>10.2f}{:>10.2f}'.format(
+					indicator,
+					optimizer_results_stats[best_run_idx]['days'],
+					optimizer_results_stats[best_run_idx]['deals'],
+					optimizer_results_stats[best_run_idx]['result_per'],
+					optimizer_results_stats[best_run_idx]['result_eur']/optimizer_results_stats[best_run_idx]['days'],
+					float(optimizer_results_stats[best_run_idx]['deals'])/float(optimizer_results_stats[best_run_idx]['days']),
+					optimizer_results_stats[best_run_idx]['sharpe'],
+					optimizer_results_stats[best_run_idx]['profitability'],
+					optimizer_results_stats[best_run_idx]['profit_factor'],
+					optimizer_results_algos[best_run_idx][param_names[0]],
+					optimizer_results_algos[best_run_idx][param_names[1]],
+					optimizer_results_algos[best_run_idx][param_names[2]],
+					optimizer_results_algos[best_run_idx][param_names[3]],
+					optimizer_results_algos[best_run_idx][param_names[4]],
+					optimizer_results_algos[best_run_idx][param_names[5]],
+					optimizer_results_algos[best_run_idx][param_names[6]],
+					optimizer_results_algos[best_run_idx][param_names[7]],
+					optimizer_results_algos[best_run_idx][param_names[8]],
+					optimizer_results_algos[best_run_idx][param_names[9]],
+					optimizer_results_algos[best_run_idx][param_names[10]]
+		))
+		print
 
 		del g_closed_deals[:]
 		first_time = True
