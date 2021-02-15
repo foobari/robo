@@ -120,7 +120,6 @@ while(True):
 									options)
 
 		# cross check
-		
 		for stock in stocks:
 			if(stock['type'] == 'long'):
 				cc_long = stock

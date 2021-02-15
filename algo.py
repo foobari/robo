@@ -5,7 +5,7 @@ import math
 import numpy as np
 import scipy
 
-from common import optimizer_results_stats, optimizer_results_algos, optimizer_param_to_optimize
+from common import optimizer_results_stats, optimizer_results_algos, optimizer_stat_to_optimize
 
 #from hurst import compute_Hc
 
@@ -80,7 +80,7 @@ def randomize_params(p):
 
 	# If param optimizing run is done, change to optimal value, move to next
 	if(optimizer_runs == optimizer_steps):
-		seq = [x[optimizer_param_to_optimize] for x in optimizer_results_stats]
+		seq = [x[optimizer_stat_to_optimize] for x in optimizer_results_stats]
 		best_run_idx = seq.index(max(seq))
 		param_name  = param_names[params_idx[optimizer_param]]
 		p[param_name] = optimizer_results_algos[best_run_idx][param_name]
@@ -99,7 +99,6 @@ def randomize_params(p):
 		return p
 
 	param_value = optimizer_params[param_names[params_idx[optimizer_param]]]
-
 
 	if(param_value > 0):
 		win_min  = param_value * (float(100 - optimizer_window)/100)
@@ -121,19 +120,15 @@ def randomize_params(p):
 
 	optimizer_runs += 1
 
-	print('optimizer running now bigrun {:<1d}: param {:<1d}/{:<2d}, run {:<1d}/{:<1d}, {:<4s}: {:<4.2f}, set({:>5.2f},{:>7.2f},{:>5.2f})'.format(
+	xs = ' ' * 100 + ' ' * 9 * params_idx[optimizer_param] + '^'
+	print xs
+
+	print('optimizer running now bigrun {:<1d}: param {:<1d}/{:<2d}, run {:<1d}/{:<1d}, {:<4s}: {:<4.3f}, set({:>5.3f},{:>7.3f},{:>5.3f})'.format(
 		optimizer_bigruns, optimizer_param, len(params_idx) - 1,
 		optimizer_runs - 1,  optimizer_steps - 1,
 		param_names[params_idx[optimizer_param]], p[param_names[params_idx[optimizer_param]]],
-		round(win_min, 3), round(win_max, 3), round(win_step, 3),))
+		round(win_min, 3), round(win_max, 3), round(win_step, 3)))
 	print
-
-#('optimizer running now:', 0, ' -> ', 0, 10, 4, 13, 'trailing', -0.5811, ':', -0.585, -0.574, 0.001)
-
-#		print('{:<2s}     |{:>8d}{:>9d}{:>9.2%}{:>8.2f}{:>10.2f}{:>10.2f}{:>16.2f}{:>16.2f}   |{:>8.2f}{:>9.2f}{:>9.2f}{:>7.2f}{:>10.2f}{:>8d}{:>10d}{:>10d}{:>10.2f}{:>10.2f}{:>10.2f}'.format(
-#					id,
-#					stats['days'],
-
 
 	return p
 
@@ -169,12 +164,7 @@ def init():
 def get_backtest_params():
 	# 	cci_up	   cci_down   target    hard   trailing   cci_w	 sma_len  rsi_len   rsi_lim   cci_big   rsi_big
 	backtest_params = (
-		(165.31,  -149.47,     0.97,  -0.42,     -0.60,    81,   164,     193,      34.93,    223.84,   39.90),
-		#(172.2,   -145.9,     0.924,   -0.373, -0.5794,   81,	 187,     193, 	    34.932,   317,	39.9),  # 36d optimized for return
-		#(172.2,   -145.9,     0.924,   -0.39,  -0.5794,   81,	 187,     193, 	    34.932,   317,	39.9),  # 35d optimized for return
-		
-		#(168.800,	-145.883,	0.924,		-0.471,		-0.5794, 	81,	187, 	194, 	34.987,	317,	39.9),  # optimized for return
-		#(195.500,	-145.883,	0.410,		-0.471,		-0.5794, 	81,	163, 	194, 	32.19,	317,	40.08), # optimized for sharpe
+		(197.900,  -149.470,    0.970, -0.425,   -0.600,     81,     165,     193,   34.930,  223.840,   39.900), # 36d optimized for return
 	)
 	return backtest_params
 

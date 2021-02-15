@@ -21,7 +21,7 @@ optimizer_results_stats = []
 optimizer_results_algos = []
 
 #result parameter to optimize to
-optimizer_param_to_optimize = 'result_eur'
+optimizer_stat_to_optimize = 'result_eur'
 previous_best_value = -10000
 
 g_closed_deals = []
@@ -167,6 +167,7 @@ def count_stats(final, stocks, last_total, grand_total, closed_deals, algo_param
 	global optimizer_results
 	global param_names
 	global previous_best_value
+	global optimizer_active_parameter
 
 	g_closed_deals.extend(closed_deals)
 
@@ -188,9 +189,9 @@ def count_stats(final, stocks, last_total, grand_total, closed_deals, algo_param
 			id = "T0"
 
 		print
-		print("       │    days    deals   profit   eur/d   deals/d    sharpe   profitability   profit_factor   │   cci_u    cci_d   target   hard  trailing   cci_w   sma_len   rsi_len   rsi_lim   cci_big   rsi_big")
-		print("───────┼─────────────────────────────────────────────────────────────────────────────────────────┼─────────────────────────────────────────────────────────────────────────────────────────────────────")
-		print('{:<2s}     │{:>8d}{:>9d}{:>9.2%}{:>8.2f}{:>10.2f}{:>10.2f}{:>16.2f}{:>16.2f}   │{:>8.2f}{:>9.2f}{:>9.2f}{:>7.2f}{:>10.2f}{:>8d}{:>10d}{:>10d}{:>10.2f}{:>10.2f}{:>10.2f}'.format(
+		print("       │ days   deals   profit   eur/d   deals/d    sharpe   profitability   profit_factor   │   cci_u     cci_d   target   hard  trailing   cci_w   sma_len   rsi_len   rsi_lim   cci_big   rsi_big")
+		print("───────┼─────────────────────────────────────────────────────────────────────────────────────┼──────────────────────────────────────────────────────────────────────────────────────────────────────")
+		print('{:<2s}     │{:>5d}{:>8d}{:>9.2%}{:>8.2f}{:>10.2f}{:>10.3f}{:>16.3f}{:>16.3f}   │{:>8.3f}{:>10.3f}{:>9.3f}{:>7.3f}{:>10.3f}{:>8d}{:>10d}{:>10d}{:>10.3f}{:>10.3f}{:>10.3f}'.format(
 					id,
 					stats['days'],
 					len(g_closed_deals),
@@ -220,16 +221,16 @@ def count_stats(final, stocks, last_total, grand_total, closed_deals, algo_param
 		optimizer_results_stats.append(s)
 		optimizer_results_algos.append(a)
 
-		seq = [x[optimizer_param_to_optimize] for x in optimizer_results_stats]
+		seq = [x[optimizer_stat_to_optimize] for x in optimizer_results_stats]
 		best_run_idx = seq.index(max(seq))
 
 		indicator = 'best   │'
-		current_best_value = optimizer_results_stats[best_run_idx][optimizer_param_to_optimize]
+		current_best_value = optimizer_results_stats[best_run_idx][optimizer_stat_to_optimize]
 		if(current_best_value > previous_best_value):
 			previous_best_value = current_best_value
 			indicator = 'best * │'
 		
-		print('{:<0s}{:>8d}{:>9d}{:>9.2%}{:>8.2f}{:>10.2f}{:>10.2f}{:>16.2f}{:>16.2f}   │{:>8.2f}{:>9.2f}{:>9.2f}{:>7.2f}{:>10.2f}{:>8d}{:>10d}{:>10d}{:>10.2f}{:>10.2f}{:>10.2f}'.format(
+		print('{:<0s}{:>5d}{:>8d}{:>9.2%}{:>8.2f}{:>10.2f}{:>10.3f}{:>16.3f}{:>16.3f}   │{:>8.3f}{:>10.3f}{:>9.3f}{:>7.3f}{:>10.3f}{:>8d}{:>10d}{:>10d}{:>10.3f}{:>10.3f}{:>10.3f}'.format(
 					indicator,
 					optimizer_results_stats[best_run_idx]['days'],
 					optimizer_results_stats[best_run_idx]['deals'],
@@ -251,7 +252,6 @@ def count_stats(final, stocks, last_total, grand_total, closed_deals, algo_param
 					optimizer_results_algos[best_run_idx][param_names[9]],
 					optimizer_results_algos[best_run_idx][param_names[10]]
 		))
-		print
 
 		del g_closed_deals[:]
 		first_time = True
