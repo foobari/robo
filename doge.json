@@ -1,0 +1,19 @@
+[
+	{
+		"name": "DOGEUSDT",
+		"url": "binance_api",
+		"type": "long",
+		"algo": "doge",
+		"leverage": 1,
+		"spread": 0.001,
+		"transaction_size": 100,
+		"transaction_money": 200,
+		"buy_full_money": true,
+		"account": "2",
+		"transaction_type": "auto",
+		"active_position": false,
+		"stocks": 0,
+		"last_buy": 0,
+		"store_to_file": true
+	}
+]
