@@ -34,10 +34,14 @@ def get_backtest_data(file):
 			tmp = tmp.replace('\n','')
 			tmp = tmp.replace(' ','')
 			tmp = tmp.split(",")
-			try:
-				backtest_data.append((float(tmp[0]), float(tmp[1]), float(tmp[2]), float(tmp[3])))
+			try:	
+				if(len(tmp) == 4):
+					backtest_data.append((float(tmp[0]), float(tmp[1]), float(tmp[2]), float(tmp[3])))
+				elif(len(tmp) == 2):
+					backtest_data.append((float(tmp[0]), 1.005 * float(tmp[0])))
 			except:
 				pass
+
 		fp.close()
 
 	entries = len(backtest_data)
@@ -50,32 +54,34 @@ def get_backtest_data(file):
 #					prog start						  #
 ###################################################################################################
 filenames = []
-file_index, best_total, param_set_index = 0, 0, 0
+file_index, best_total = 0, 0
 
 options = common.check_args(sys.argv)
 options['dry_run'] = True
 
 s = settings.init('settings_backtester.json')
-alg = algo.init()
 
-if(s['cycle_params']):
-	alg = algo.set_new_params(alg, 0)
-	param_set_index = param_set_index + 1
+algo.init()
+stocks = common.init_stocks(options)
 
-if(s['randomize']):
-	alg = algo.randomize_params(alg)
+alg = algo.set_new_params(stocks)
+
+if(s['optimize']):
+	alg = algo.optimize_params(alg)
 
 if(options['do_graph']):
 	graph.init()
 
 # get file(s)
 filenames = get_backtest_files(s['file_dir'], s['file_name'])
+if(len(filenames) == 0):
+	print "No input file(s) found"
+	quit()
 
 while(True):
 	closed_deals = []
 	index, money, last_total = 0, 0, 0
-	stocks = common.init_stocks(alg, options)
-
+	
 	if(file_index < len(filenames)):
 		backtest_data, entries = get_backtest_data(filenames[file_index])
 		file_index = file_index + 1
@@ -83,15 +89,17 @@ while(True):
 		if(s['one_shot']):
 			quit()
 		
-		if(s['randomize']):
-			alg = algo.randomize_params(alg)
+		if(s['optimize']):
+			alg = algo.optimize_params(alg)
 		
+		'''
 		if(s['cycle_params']):
 			if(param_set_index < len(algo.get_backtest_params())):
 				alg = algo.set_new_params(alg, param_set_index)
 				param_set_index = param_set_index + 1
 			else:
 				quit()
+		'''
 		file_index = 0
 		best_total = 0
 		continue
@@ -120,33 +128,34 @@ while(True):
 									options)
 
 		# cross check
-		for stock in stocks:
-			if(stock['type'] == 'long'):
-				cc_long = stock
-			elif(stock['type'] == 'short'):
-				cc_short = stock
+		if(len(stocks) == 2):
+			for stock in stocks:
+				if(stock['type'] == 'long'):
+					cc_long = stock
+				elif(stock['type'] == 'short'):
+					cc_short = stock
 
-		if(cc_short['active_position'] and cc_long['flip'] == 1):
-				money, last_total = common.do_transaction(cc_short,
-									-1,
-									"cross",
-									money,
-									last_total,
-									closed_deals,
-									alg,
-									index,
-									options)
+			if(cc_short['active_position'] and cc_long['flip'] == 1):
+					money, last_total = common.do_transaction(cc_short,
+										-1,
+										"cross",
+										money,
+										last_total,
+										closed_deals,
+										alg,
+										index,
+										options)
 
-		if(cc_long['active_position'] and cc_short['flip'] == 1):
-				money, last_total = common.do_transaction(cc_long,
-									-1,
-									"cross",
-									money,
-									last_total,
-									closed_deals,
-									alg,
-									index,
-									options)
+			if(cc_long['active_position'] and cc_short['flip'] == 1):
+					money, last_total = common.do_transaction(cc_long,
+										-1,
+										"cross",
+										money,
+										last_total,
+										closed_deals,
+										alg,
+										index,
+										options)
 		
 
 		# graph

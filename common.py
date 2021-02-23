@@ -35,13 +35,14 @@ stats['result_per'] = 0
 
 options = {}
 options['inputfile']   = ''
-options['outputfile']  = 'guru99.txt'
+options['outputfile']  = 'guru99x.txt'
 options['do_graph']    = False
 options['do_actions']  = False
 options['dry_run']     = False
 options['do_optimize'] = False
 
-param_names = ['cci_up',
+param_names = [ 'name',
+	        'cci_up',
 		'cci_down',
 		'target',
 		'hard',
@@ -53,7 +54,7 @@ param_names = ['cci_up',
 		'cci_big',
 		'rsi_big']
 
-def init_stocks(algo_params, options):
+def init_stocks(options):
 	#print("open stocks file", options['inputfile'])
 	with open(options['inputfile'], 'r') as f:
 		stocks = json.load(f)
@@ -64,6 +65,8 @@ def init_stocks(algo_params, options):
 		stock['sell'] = 0
 		stock['current_top'] = 0
 		stock['dir'] = 0
+		stock['trigger'] = 0
+		stock['guard'] = 0
 		stock['buy_series'] = []
 		stock['sell_series'] = []
 		stock['sma_series_short'] = []
@@ -100,13 +103,20 @@ def init_stocks(algo_params, options):
 		stock['flip'] = 0
 		stock['no_buy'] = False
 
+		'''
 		if(stock['active_position'] and (stock['transaction_type'] == 'sell_away')):
 			stock['trailing_stop_loss'] = ((1 + algo_params['trailing'] * stock['leverage'] / 100) * stock['last_buy'])
 			print("buy", stock['last_buy'], "hard_stop_loss", stock['hard_stop_loss'], stock['stocks'])
 		else:
-			stock['hard_stop_loss'] = 0
-			stock['trailing_stop_loss'] = 0
+		'''
+		stock['hard_stop_loss'] = 0
+		stock['trailing_stop_loss'] = 0
 
+		'''
+		if(stock['algo'] != algo_params['name']):
+			print("algo/stock mismatch, exiting")
+			quit()
+		'''
 	return stocks
 
 def get_deal_result(deal):
@@ -201,7 +211,6 @@ def count_stats(final, stocks, last_total, grand_total, closed_deals, algo_param
 					stats['sharpe'],
 					stats['profitability'],
 					stats['profit_factor'],
-					algo_params[param_names[0]],
 					algo_params[param_names[1]],
 					algo_params[param_names[2]],
 					algo_params[param_names[3]],
@@ -211,7 +220,8 @@ def count_stats(final, stocks, last_total, grand_total, closed_deals, algo_param
 					algo_params[param_names[7]],
 					algo_params[param_names[8]],
 					algo_params[param_names[9]],
-					algo_params[param_names[10]]
+					algo_params[param_names[10]],
+					algo_params[param_names[11]]
 		))
 
 
@@ -240,7 +250,6 @@ def count_stats(final, stocks, last_total, grand_total, closed_deals, algo_param
 					optimizer_results_stats[best_run_idx]['sharpe'],
 					optimizer_results_stats[best_run_idx]['profitability'],
 					optimizer_results_stats[best_run_idx]['profit_factor'],
-					optimizer_results_algos[best_run_idx][param_names[0]],
 					optimizer_results_algos[best_run_idx][param_names[1]],
 					optimizer_results_algos[best_run_idx][param_names[2]],
 					optimizer_results_algos[best_run_idx][param_names[3]],
@@ -250,7 +259,8 @@ def count_stats(final, stocks, last_total, grand_total, closed_deals, algo_param
 					optimizer_results_algos[best_run_idx][param_names[7]],
 					optimizer_results_algos[best_run_idx][param_names[8]],
 					optimizer_results_algos[best_run_idx][param_names[9]],
-					optimizer_results_algos[best_run_idx][param_names[10]]
+					optimizer_results_algos[best_run_idx][param_names[10]],
+					optimizer_results_algos[best_run_idx][param_names[11]]
 		))
 
 		del g_closed_deals[:]
@@ -282,12 +292,15 @@ def do_transaction(stock, flip, reason, money, last_total, closed_deals, algo_pa
 		stock['active_position'] = True
 		stock['current_top']        = buy
 		stock['last_buy']           = sell
-		stock['hard_stop_loss']	    = ((1 + algo_params['hard']     * stock['leverage'] / 100) * sell)
+		stock['hard_stop_loss']	    = ((1 + algo_params['hard'] * stock['leverage'] / 100) * sell)
 		stock['trailing_stop_loss'] = ((1 + algo_params['trailing'] * stock['leverage'] / 100) * sell)
 		stock['signals_list_buy'].append((index, stock['sell_series'][-1]))
 
 		if(stock['buy_full_money'] == True):
-			stock['transaction_size'] = int(stock['transaction_money'] / sell)
+			if((float(stock['transaction_money']) / sell) > 1):
+				stock['transaction_size'] = int(stock['transaction_money'] / sell)
+			else:
+				stock['transaction_size'] = float(stock['transaction_money'] / sell)
 
 		if(options['do_actions']):
 			print(datetime.now().strftime("%H:%M:%S"), "ACTION: BUY ", stock['name'], stock['transaction_size'], stock['last_buy'], reason)
@@ -344,7 +357,10 @@ def store_stock_values(stocks, index, options):
 	# store
 	if(do_write):
 		f = open(options['outputfile'],"a+")
-		f.write(str((buy_long, sell_long, buy_short, sell_short)) + '\n')
+		if(len(stocks) == 1):
+			f.write(str((buy_long, sell_long)) + '\n')
+		else:
+			f.write(str((buy_long, sell_long, buy_short, sell_short)) + '\n')
 		f.close()
 
 

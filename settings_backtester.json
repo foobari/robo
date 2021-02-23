@@ -1,8 +1,7 @@
 {
 	"graph_update_interval": 50,
-	"randomize": false,
-	"cycle_params": false,
-	"one_shot": true,
-	"file_dir": "/home/foobari/src/robogit/robo/backtest/",
-	"file_name": "data_??022021*.dat"
+	"optimize": true,
+	"one_shot": false,
+	"file_dir": "/home/foobari/src/robogit/robo/backtest/btc",
+	"file_name": "data_*"
 }

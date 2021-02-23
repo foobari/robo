@@ -29,21 +29,24 @@ index, money, last_total, best_total = 0, 0, 0, 0
 
 
 closed_deals = []	
- 
-options = common.check_args(sys.argv)
 
-alg  	= algo.init()
-print alg
+algo.init() 
+
+options = common.check_args(sys.argv)
+stocks 	= common.init_stocks(options)
 sett 	= settings.init('settings_robo.json')
-stocks 	= common.init_stocks(alg, options)
+
+alg = algo.set_new_params(stocks)
+
 is_last = False
 
 for stock in stocks:
 	print(stock['name'], stock['url'], stock['transaction_type'])
 
-while(datetime.now() < datetime.now().replace(hour = 9, minute = 15)):
-	print(datetime.now().strftime("%H:%M:%S"), "waiting for Nordnet to open...")
-	time.sleep(10)
+if(stocks[0]['url'] != 'binance_api'):
+	while(datetime.now() < datetime.now().replace(hour = 9, minute = 15)):
+		print(datetime.now().strftime("%H:%M:%S"), "waiting for Nordnet to open...")
+		time.sleep(10)
 
 
 with open('credentials.json', 'r') as f:
@@ -52,7 +55,7 @@ with open('credentials.json', 'r') as f:
 if(options['do_graph']):
 	graph.init()
 
-# here we go, login to Nordnet
+# here we go, login
 for stock in stocks:
 	online.login(stock, creds)
 
@@ -73,15 +76,17 @@ while(not is_last):
 	common.store_stock_values(stocks, index, options)
 
 	# check signals, do transactions
+	flip = 0
 	for stock in stocks:
-		if(datetime.now() > datetime.now().replace(hour = 20, minute = 50)):
-			print("Day end, closing open positions and exit")
-			is_last = True
-			flip = -1
-			reason = 'day_close'
-		else:
-			stock['no_buy']  = datetime.now() > datetime.now().replace(hour = 20, minute = 00)
-			flip, reason = algo.check_signals(stock, index, alg)
+		if(stock['url'] != 'binance_api'):
+			if(datetime.now() > datetime.now().replace(hour = 20, minute = 50)):
+				print("Day end, closing open positions and exit")
+				is_last = True
+				flip = -1
+				reason = 'day_close'
+			else:
+				stock['no_buy']  = datetime.now() > datetime.now().replace(hour = 20, minute = 00)
+				flip, reason = algo.check_signals(stock, index, alg)
 
 		if(flip != 0):
 			money, last_total = common.do_transaction(stock,
@@ -93,34 +98,36 @@ while(not is_last):
 								  alg,
 								  index,
 								  options)
+
 	# cross check
-	for stock in stocks:
-		if(stock['type'] == 'long'):
-			cc_long = stock
-		elif(stock['type'] == 'short'):
-			cc_short = stock
+	if(len(stocks) == 2):
+		for stock in stocks:
+			if(stock['type'] == 'long'):
+				cc_long = stock
+			elif(stock['type'] == 'short'):
+				cc_short = stock
 
-	if(cc_short['active_position'] and cc_long['flip'] == 1):
-			money, last_total = common.do_transaction(cc_short,
-								-1,
-								"cross",
-								money,
-								last_total,
-								closed_deals,
-								alg,
-								index,
-								options)
+		if(cc_short['active_position'] and cc_long['flip'] == 1):
+				money, last_total = common.do_transaction(cc_short,
+									-1,
+									"cross",
+									money,
+									last_total,
+									closed_deals,
+									alg,
+									index,
+									options)
 
-	if(cc_long['active_position'] and cc_short['flip'] == 1):
-			money, last_total = common.do_transaction(cc_long,
-								-1,
-								"cross",
-								money,
-								last_total,
-								closed_deals,
-								alg,
-								index,
-								options)
+		if(cc_long['active_position'] and cc_short['flip'] == 1):
+				money, last_total = common.do_transaction(cc_long,
+									-1,
+									"cross",
+									money,
+									last_total,
+									closed_deals,
+									alg,
+									index,
+									options)
 
 	# graph
 	if(options['do_graph'] and (index % sett['graph_update_interval'] == 0)):

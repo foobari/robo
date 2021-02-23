@@ -20,7 +20,10 @@ optimizer_param   =  0
 optimizer_bigruns =  0
 optimizer_params = []
 
-param_names = ['cci_up',
+p = {}
+
+param_names = [ 'name',
+	        'cci_up',
 		'cci_down',
 		'target',
 		'hard',
@@ -33,33 +36,46 @@ param_names = ['cci_up',
 		'rsi_big']
 
 # parameter list to optimize
-params_idx = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+params_idx = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
 
 
-def set_new_params(p, index):
+def set_new_params(stocks):
 	global optimizer_params
+	global p
 
 	bp = get_backtest_params()
 
-	p['cci_up'] 	= bp[index][0]
-	p['cci_down'] 	= bp[index][1]
-	p['target']	= bp[index][2]
-	p['hard'] 	= bp[index][3]
-	p['trailing'] 	= bp[index][4]
-	p['cci_window']	= bp[index][5]
-	p['sma_len']	= bp[index][6]
-	p['rsi_len']	= bp[index][7]
-	p['rsi_lim']	= bp[index][8]	
-	p['cci_big'] 	= bp[index][9]
-	p['rsi_big'] 	= bp[index][10]
+	index = 0
+	for parset in bp:
+		if(parset[0] == stocks[0]['algo']):
+			break
+		index += 1
 
-	print("parametrized set", index)
+	if(index >= len(bp)):
+		print "No matching algo, exit"
+		quit()
+
+	p['name'] 	= bp[index][0]
+	p['cci_up'] 	= bp[index][1]
+	p['cci_down'] 	= bp[index][2]
+	p['target']	= bp[index][3]
+	p['hard'] 	= bp[index][4]
+	p['trailing'] 	= bp[index][5]
+	p['cci_window']	= bp[index][6]
+	p['sma_len']	= bp[index][7]
+	p['rsi_len']	= bp[index][8]
+	p['rsi_lim']	= bp[index][9]	
+	p['cci_big'] 	= bp[index][10]
+	p['rsi_big'] 	= bp[index][11]
+
+	print "Parameters", p
+	
 	
 	optimizer_params = p.copy()
 	return p
 
 
-def randomize_params(p):
+def optimize_params(p):
 	global optimizer_runs
 	global optimizer_param
 	global optimizer_steps
@@ -74,8 +90,8 @@ def randomize_params(p):
 		params_idx = random.sample(params_idx, len(params_idx))
 		print "Randomized order", params_idx
 
-		optimizer_window =  int(random.uniform(1, 30))
-		optimizer_steps  =  int(random.uniform(5, 20))
+		optimizer_window =  int(random.uniform(1,  50))
+		optimizer_steps  =  int(random.uniform(5,  20))
 		print "Randomized window: ±", optimizer_window, "%, steps: ", optimizer_steps
 
 	# If param optimizing run is done, change to optimal value, move to next
@@ -120,22 +136,29 @@ def randomize_params(p):
 
 	optimizer_runs += 1
 
-	xs = ' ' * 100 + ' ' * 9 * params_idx[optimizer_param] + '^'
+	xs = ' ' * 100 + ' ' * 9 * (params_idx[optimizer_param] - 1) + '^'
 	print xs
 
-	print('optimizer running now bigrun {:<1d}: param {:<1d}/{:<2d}, run {:<1d}/{:<1d}, {:<4s}: {:<4.3f}, set({:>5.3f},{:>7.3f},{:>5.3f})'.format(
+	b_spaces = '-' * (optimizer_runs - 1)
+	a_spaces = '-' * (optimizer_steps - optimizer_runs)
+	progress_runs = "[" + b_spaces + "x" + a_spaces + "]"
+	b_spaces = '-' * optimizer_param
+	a_spaces = '-' * (len(params_idx) - 1 - optimizer_param)
+	progress_pars = "[" + b_spaces + "x" + a_spaces + "]"
+
+	print('optimizer running {:<1d}: param {:<1d}/{:<2d}, run {:<1d}/{:<1d}, {:<4s}: {:<4.3f} [{:>0.3f},{:>8.3f},{:>6.3f}]'.format(
 		optimizer_bigruns, optimizer_param, len(params_idx) - 1,
 		optimizer_runs - 1,  optimizer_steps - 1,
 		param_names[params_idx[optimizer_param]], p[param_names[params_idx[optimizer_param]]],
 		round(win_min, 3), round(win_max, 3), round(win_step, 3)))
-	print
+	print optimizer_bigruns, progress_pars, progress_runs
 
 	return p
 
 def init():
 	global algos
 	global techs
-
+	
 	techs = [calc_sma,
 		 calc_rsi,
 		 calc_cci,
@@ -157,14 +180,21 @@ def init():
 		 algo_trailing_stoploss,
 		 algo_reach_target,
 		]
-		 
-	p = set_new_params(OrderedDict(), 0)
-	return p
+
 
 def get_backtest_params():
-	# 	cci_up	   cci_down   target    hard   trailing   cci_w	 sma_len  rsi_len   rsi_lim   cci_big   rsi_big
+	# 	cci_up	    cci_down    target    hard   trailing    cci_w    sma_len    rsi_len    rsi_lim    cci_big    rsi_big
 	backtest_params = (
-		(197.900,  -149.470,    0.970, -0.425,   -0.600,     81,     165,     193,   34.930,  223.840,   39.900), # 36d optimized for return
+
+	('dax',   197.900,  -149.897,    0.970, -0.457,    -0.666,      81,       165,       193,    34.930,   223.840,    39.900), # 41d dax optimized for return
+	('doge',  179.845,   -90.722,    2.070, -4.187,    -2.389,      66,       147,       297,    38.195,   180.823,    37.863), # doge4
+	('btc',   189.216,  -169.045,    5.504, -0.815,    -0.869,      85,       139,       176,    29.998,   237.727,    41.052), # btc4
+
+
+
+	#('dax',  197.900,  -149.470,    1.151, -0.384,    -0.600,     81,     165,     193,   34.930,  193.927,   39.900), #12-2020 opt
+	#('dax',  193.942,  -164.417,    0.970, -0.468,    -0.600,     85,     135,     193,   34.930,  237.270,   39.900), #01-2021 opt
+	#('dax',  197.900,  -189.827,    0.970, -0.540,    -0.573,     81,     120,     193,   34.930,  233.633,   43.491), #02-2021 opt
 	)
 	return backtest_params
 
@@ -176,12 +206,15 @@ def algo_rsi_trigger(stock, index, algo_params):
 	RSI_WINDOW = algo_params['rsi_len']
 
 	if(index > RSI_WINDOW):
-		if(stock['rsi_series'][-2] < RSI_LIMIT and stock['rsi_series'][-1] > RSI_LIMIT and
-		   not stock['no_buy']):
-			flip = 1
-			reason = 'rsi'
+		if(not stock['active_position']):
+			if(stock['rsi_series'][-2] < RSI_LIMIT and stock['rsi_series'][-1] > RSI_LIMIT and not stock['no_buy']):
+				flip = 1
+				reason = 'rsi'
+		
+		# Makes slightly worse
 		'''
-		if(stock['rsi_series'][-2] > (100 - RSI_LIMIT) and stock['rsi_series'][-1] < (100 - RSI_LIMIT)):
+		if(stock['active_position'] and stock['rsi_series'][-2] > 70 and stock['rsi_series'][-1] < 70):
+			print "rsihit"
 			flip = -1
 			reason = 'rsi'
 		'''
@@ -196,7 +229,6 @@ def algo_cci_trigger(stock, index, algo_params):
 	buy  = float(stock['buy_series'][-1])
 	sell = float(stock['sell_series'][-1])
 
-		
 	if(index > SMA_LONG):
 		if(not stock['active_position']):
 			if((stock['cci_series'][-2] < algo_params['cci_down']) and (stock['cci_series'][-1] >= algo_params['cci_down']) and
@@ -215,13 +247,12 @@ def algo_cci_trigger(stock, index, algo_params):
 			if(stock['cci_series'][-1] < -algo_params['cci_big'] and stock['rsi_series'][-1] < algo_params['rsi_big']):
 				reason = "cci_big"
 				flip = 1
-
-		'''
-		if(stock['active_position']):
-			if((stock['cci_series'][-1] > 317 and stock['rsi_series'][-1] > 60.1)):
-					reason = "cci_big"
-					flip = -1
-		'''
+			'''
+			if(stock['cci_series'][-2] < -algo_params['cci_big'] and stock['cci_series'][-1] > -algo_params['cci_big'] and
+			   stock['rsi_series'][-1] < algo_params['rsi_big']):
+				reason = "cci_big"
+				flip = 1
+			'''
 	return flip, reason
 
 
@@ -246,7 +277,7 @@ def algo_trailing_stoploss(stock, index, algo_params):
 
 	if(stock['active_position']):
 		trailing = algo_params['trailing']
-		target_price = ((1 + trailing * stock['leverage'] / 100) * stock['current_top'])
+		target_price = ((1 + float(trailing) * stock['leverage'] / 100) * stock['current_top'])
 			
 		if(buy >= stock['current_top']):
 			stock['current_top'] = buy
@@ -265,7 +296,7 @@ def algo_reach_target(stock, index, algo_params):
 	buy  = float(stock['buy_series'][-1])
 	
 	if(stock['active_position']):
-		target_price = ((1 + algo_params['target'] * stock['leverage'] / 100) * stock['last_buy'])
+		target_price = ((1 + float(algo_params['target']) * stock['leverage'] / 100) * stock['last_buy'])
 		if(buy >= target_price):
 			reason = "target"
 			flip = -1

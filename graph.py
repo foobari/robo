@@ -50,16 +50,16 @@ def draw_cci(lng, shrt):
 	global ax3
 
 	bp = algo.get_backtest_params()
-	cci_u = bp[0][0]
-	cci_d = bp[0][1]
-	cci_b = bp[0][9]
+	cci_u = bp[0][1]
+	cci_d = bp[0][2]
+	cci_b = bp[0][10]
 
 	ax3.clear()
 	ax3.set(ylim=(-330, 330))
 	ax3.axhline(y=  cci_u, color='red', label = "cci up", linestyle='dotted')
 	ax3.axhline(y=  cci_d, color='green', label = "cci down", linestyle='dotted')
-	ax3.axhline(y= -cci_b, color='brown', label = "cci down", linestyle='dotted')
-	ax3.axhline(y=  cci_b, color='brown', label = "cci down", linestyle='dotted')
+	ax3.axhline(y= -cci_b, color='brown', label = "cci big", linestyle='dotted')
+	ax3.axhline(y=  cci_b, color='brown', label = "cci big", linestyle='dotted')
 	ax3.plot(lng,  color="olivedrab", label = "cci_series (bull)")
 	ax3.plot(shrt, color="steelblue", label = "cci_series (bear)")
 	ax3.legend(loc="upper left")
