@@ -3,5 +3,5 @@
 	"optimize": true,
 	"one_shot": false,
 	"file_dir": "/home/foobari/src/robogit/robo/backtest/btc",
-	"file_name": "data_*"
+	"file_name": "data_22*"
 }

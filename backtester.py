@@ -104,9 +104,12 @@ while(True):
 		best_total = 0
 		continue
 
+	stocks = common.init_stocks(options)
+
 	# Run for one day in backtesting
 	while(index < entries):
 		# check signals, do transactions (single stocks)
+	
 		for stock in stocks:
 			online.get_stock_values(stock, index, backtest_data)
 

@@ -17,8 +17,8 @@ from datetime import datetime
 import settings
 import online
 
-optimizer_results_stats = []
-optimizer_results_algos = []
+optimizer_result_best_stat = {}
+optimizer_result_best_algo = {}
 
 #result parameter to optimize to
 optimizer_stat_to_optimize = 'result_eur'
@@ -171,13 +171,18 @@ def calc_stats(closed_deals):
 
 	return stats
 
+def get_optimizer_vars():
+	global optimizer_result_best_algo
+
+	return optimizer_result_best_algo
+
 def count_stats(final, stocks, last_total, grand_total, closed_deals, algo_params):
 	global g_closed_deals
 	global stats
-	global optimizer_results
 	global param_names
 	global previous_best_value
-	global optimizer_active_parameter
+	global optimizer_result_best_stat
+	global optimizer_result_best_algo
 
 	g_closed_deals.extend(closed_deals)
 
@@ -224,43 +229,41 @@ def count_stats(final, stocks, last_total, grand_total, closed_deals, algo_param
 					algo_params[param_names[11]]
 		))
 
+		if(len(optimizer_result_best_stat) == 0):
+			optimizer_result_best_stat = stats.copy()
+			optimizer_result_best_algo = algo_params.copy()
+		elif(stats[optimizer_stat_to_optimize] > optimizer_result_best_stat[optimizer_stat_to_optimize]):
+			optimizer_result_best_stat = stats.copy()
+			optimizer_result_best_algo = algo_params.copy()
 
-
-		s = stats.copy()
-		a = algo_params.copy()
-		optimizer_results_stats.append(s)
-		optimizer_results_algos.append(a)
-
-		seq = [x[optimizer_stat_to_optimize] for x in optimizer_results_stats]
-		best_run_idx = seq.index(max(seq))
 
 		indicator = 'best   │'
-		current_best_value = optimizer_results_stats[best_run_idx][optimizer_stat_to_optimize]
+		current_best_value = optimizer_result_best_stat[optimizer_stat_to_optimize]
 		if(current_best_value > previous_best_value):
 			previous_best_value = current_best_value
 			indicator = 'best * │'
 		
 		print('{:<0s}{:>5d}{:>8d}{:>9.2%}{:>8.2f}{:>10.2f}{:>10.3f}{:>16.3f}{:>16.3f}   │{:>8.3f}{:>10.3f}{:>9.3f}{:>7.3f}{:>10.3f}{:>8d}{:>10d}{:>10d}{:>10.3f}{:>10.3f}{:>10.3f}'.format(
 					indicator,
-					optimizer_results_stats[best_run_idx]['days'],
-					optimizer_results_stats[best_run_idx]['deals'],
-					optimizer_results_stats[best_run_idx]['result_per'],
-					optimizer_results_stats[best_run_idx]['result_eur']/optimizer_results_stats[best_run_idx]['days'],
-					float(optimizer_results_stats[best_run_idx]['deals'])/float(optimizer_results_stats[best_run_idx]['days']),
-					optimizer_results_stats[best_run_idx]['sharpe'],
-					optimizer_results_stats[best_run_idx]['profitability'],
-					optimizer_results_stats[best_run_idx]['profit_factor'],
-					optimizer_results_algos[best_run_idx][param_names[1]],
-					optimizer_results_algos[best_run_idx][param_names[2]],
-					optimizer_results_algos[best_run_idx][param_names[3]],
-					optimizer_results_algos[best_run_idx][param_names[4]],
-					optimizer_results_algos[best_run_idx][param_names[5]],
-					optimizer_results_algos[best_run_idx][param_names[6]],
-					optimizer_results_algos[best_run_idx][param_names[7]],
-					optimizer_results_algos[best_run_idx][param_names[8]],
-					optimizer_results_algos[best_run_idx][param_names[9]],
-					optimizer_results_algos[best_run_idx][param_names[10]],
-					optimizer_results_algos[best_run_idx][param_names[11]]
+					optimizer_result_best_stat['days'],
+					optimizer_result_best_stat['deals'],
+					optimizer_result_best_stat['result_per'],
+					optimizer_result_best_stat['result_eur']/optimizer_result_best_stat['days'],
+					float(optimizer_result_best_stat['deals'])/float(optimizer_result_best_stat['days']),
+					optimizer_result_best_stat['sharpe'],
+					optimizer_result_best_stat['profitability'],
+					optimizer_result_best_stat['profit_factor'],
+					optimizer_result_best_algo[param_names[1]],
+					optimizer_result_best_algo[param_names[2]],
+					optimizer_result_best_algo[param_names[3]],
+					optimizer_result_best_algo[param_names[4]],
+					optimizer_result_best_algo[param_names[5]],
+					optimizer_result_best_algo[param_names[6]],
+					optimizer_result_best_algo[param_names[7]],
+					optimizer_result_best_algo[param_names[8]],
+					optimizer_result_best_algo[param_names[9]],
+					optimizer_result_best_algo[param_names[10]],
+					optimizer_result_best_algo[param_names[11]]
 		))
 
 		del g_closed_deals[:]

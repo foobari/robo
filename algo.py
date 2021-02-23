@@ -4,8 +4,7 @@ import random
 import math
 import numpy as np
 import scipy
-
-from common import optimizer_results_stats, optimizer_results_algos, optimizer_stat_to_optimize
+import common
 
 #from hurst import compute_Hc
 
@@ -86,6 +85,8 @@ def optimize_params(p):
 	global params_idx
 	global param_names
 
+	optimizer_result_best_algo = common.get_optimizer_vars()
+
 	if(optimizer_runs == 0):
 		params_idx = random.sample(params_idx, len(params_idx))
 		print "Randomized order", params_idx
@@ -96,10 +97,8 @@ def optimize_params(p):
 
 	# If param optimizing run is done, change to optimal value, move to next
 	if(optimizer_runs == optimizer_steps):
-		seq = [x[optimizer_stat_to_optimize] for x in optimizer_results_stats]
-		best_run_idx = seq.index(max(seq))
 		param_name  = param_names[params_idx[optimizer_param]]
-		p[param_name] = optimizer_results_algos[best_run_idx][param_name]
+		p[param_name] = optimizer_result_best_algo[param_name]
 		optimizer_runs = 0
 		optimizer_param += 1
 	
@@ -111,7 +110,7 @@ def optimize_params(p):
 		optimizer_bigruns += 1
 
 		# set the optimal set as a baseline
-		optimizer_params = optimizer_results_algos[best_run_idx]
+		optimizer_params = optimizer_result_best_algo
 		return p
 
 	param_value = optimizer_params[param_names[params_idx[optimizer_param]]]
