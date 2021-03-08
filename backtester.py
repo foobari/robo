@@ -27,6 +27,8 @@ def get_backtest_files(folder_path, file_name):
 
 def get_backtest_data(file):
 	backtest_data = []
+	spread = 1.001
+
 	with open(file, "rb") as fp:
 		for i in fp.readlines():
 			tmp = i.replace('(','')
@@ -38,7 +40,7 @@ def get_backtest_data(file):
 				if(len(tmp) == 4):
 					backtest_data.append((float(tmp[0]), float(tmp[1]), float(tmp[2]), float(tmp[3])))
 				elif(len(tmp) == 2):
-					backtest_data.append((float(tmp[0]), 1.005 * float(tmp[0])))
+					backtest_data.append((float(tmp[0]), spread * float(tmp[0])))
 			except:
 				pass
 
@@ -92,14 +94,6 @@ while(True):
 		if(s['optimize']):
 			alg = algo.optimize_params(alg)
 		
-		'''
-		if(s['cycle_params']):
-			if(param_set_index < len(algo.get_backtest_params())):
-				alg = algo.set_new_params(alg, param_set_index)
-				param_set_index = param_set_index + 1
-			else:
-				quit()
-		'''
 		file_index = 0
 		best_total = 0
 		continue

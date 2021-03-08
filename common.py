@@ -21,7 +21,8 @@ optimizer_result_best_stat = {}
 optimizer_result_best_algo = {}
 
 #result parameter to optimize to
-optimizer_stat_to_optimize = 'result_eur'
+#optimizer_stat_to_optimize = 'result_eur'
+optimizer_stat_to_optimize = 'profitability'
 previous_best_value = -10000
 
 g_closed_deals = []
@@ -102,21 +103,10 @@ def init_stocks(options):
 		stock['reason'] = ''
 		stock['flip'] = 0
 		stock['no_buy'] = False
-
-		'''
-		if(stock['active_position'] and (stock['transaction_type'] == 'sell_away')):
-			stock['trailing_stop_loss'] = ((1 + algo_params['trailing'] * stock['leverage'] / 100) * stock['last_buy'])
-			print("buy", stock['last_buy'], "hard_stop_loss", stock['hard_stop_loss'], stock['stocks'])
-		else:
-		'''
-		stock['hard_stop_loss'] = 0
 		stock['trailing_stop_loss'] = 0
+		if(stock['transaction_type'] != "sell_away"):
+			stock['hard_stop_loss'] = 0
 
-		'''
-		if(stock['algo'] != algo_params['name']):
-			print("algo/stock mismatch, exiting")
-			quit()
-		'''
 	return stocks
 
 def get_deal_result(deal):
@@ -286,6 +276,19 @@ def post_to_toilet(time, action, name, amount, price):
 		resp = requests.post(url, json=data)
 		print resp
 
+def print_decision_vars(stock):
+	if(False):
+		len = 5
+		print("current_top", stock['current_top'])
+		print("sell_series", stock['sell_series'][-len:])
+		print("sma_series_short", stock['sma_series_short'][-len:])
+		print("sma_series_long", stock['sma_series_long'][-len:])
+		print("cci_series", stock['cci_series'][-len:])
+		print("rsi_series", stock['rsi_series'][-len:])
+		print("cci_ptyp", stock['cci_ptyp'][-len:])
+		print("bb_upper", stock['bb_upper'][-len:])
+		print("bb_lower", stock['bb_lower'][-len:])
+
 def do_transaction(stock, flip, reason, money, last_total, closed_deals, algo_params, index, options):
 	buy  = float(stock['buy_series'][-1])
 	sell = float(stock['sell_series'][-1])
@@ -307,6 +310,8 @@ def do_transaction(stock, flip, reason, money, last_total, closed_deals, algo_pa
 
 		if(options['do_actions']):
 			print(datetime.now().strftime("%H:%M:%S"), "ACTION: BUY ", stock['name'], stock['transaction_size'], stock['last_buy'], reason)
+
+		print_decision_vars(stock)
 
 		post_to_toilet(datetime.now().strftime("%H:%M:%S"), "BUY", stock['name'], stock['transaction_size'], stock['last_buy'])
 
@@ -331,6 +336,8 @@ def do_transaction(stock, flip, reason, money, last_total, closed_deals, algo_pa
 			print(datetime.now().strftime("%H:%M:%S"), "ACTION: SELL", stock['name'], stock['transaction_size'], buy, '{:.1%}'.format(result_per), round(result_eur, 2), reason, "total", round(last_total, 2))
 
 		post_to_toilet(datetime.now().strftime("%H:%M:%S"), "SELL", stock['name'], stock['transaction_size'], buy)
+
+		print_decision_vars(stock)
 
 		if(not options['dry_run']):
 			online.execute_sell_order_online(stock)
@@ -361,8 +368,10 @@ def store_stock_values(stocks, index, options):
 	if(do_write):
 		f = open(options['outputfile'],"a+")
 		if(len(stocks) == 1):
+			# Binance
 			f.write(str((buy_long, sell_long)) + '\n')
 		else:
+			# Nordnet
 			f.write(str((buy_long, sell_long, buy_short, sell_short)) + '\n')
 		f.close()
 

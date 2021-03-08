@@ -18,10 +18,19 @@ import sys
 binance_client = []
 
 def execute_buy_order_online(stock):
+	global binance_client
+
 	print("Execute buy order", stock['name'])
 
 	if(stock['url'] == 'binance_api'):
-		print("binance buy", stock)
+		if(stock['name'] == "DOGEUSDT"):
+			amount = stock['transaction_size']
+			order = binance_client.order_market_buy(symbol='DOGEUSDT', quantity = amount)
+			print order
+			print
+		else:
+			print "not supported", stock['name']
+
 	else:
 
 		# click buy
@@ -52,13 +61,21 @@ def execute_buy_order_online(stock):
 		time.sleep(0.1)
 		stock['browser'].get(stock['url'])
 
-	print("return")
-
+	
 def execute_sell_order_online(stock):
+	global binance_client
+	
 	print("Execute sell order", stock['name'])
 
 	if(stock['url'] == 'binance_api'):
-		print("binance sell", stock)
+		if(stock['name'] == "DOGEUSDT"):
+			amount = stock['transaction_size']
+			order = binance_client.order_market_sell(symbol = 'DOGEUSDT', quantity = amount)
+			print order
+			print "------------------------"
+		else:
+			print "not supported", stock['name']
+
 	else:
 		# click sell
 		WebDriverWait(stock['browser'], 10).until(EC.presence_of_element_located((By.XPATH, '//*[@id="main-content"]/div[1]/div[1]/div/div/div/div/div/div[2]/div[2]/div[2]/a'))).click()
@@ -88,7 +105,7 @@ def execute_sell_order_online(stock):
 		# return
 		time.sleep(0.1)
 		stock['browser'].get(stock['url'])
-	print("return")
+	
 
 def stock_sanity_check(stock, index):
 	if((stock['buy_series'][-1] == 0)):
@@ -120,8 +137,9 @@ def get_stock_values(stock, index, backtest_data=None):
 		if(stock['url'] == 'binance_api'):
 			trades = binance_client.get_aggregate_trades(symbol=stock['name'])
 			buy  = float(trades[-1]['p'])
-			# #Standard" spread
-			sell = buy * 1.005
+			# Use standard spread to simulate binance trading fees
+			spread = 1.001
+			sell = buy * spread
 			stock['buy_series'].append(buy)
 			stock['sell_series'].append(sell)
 		# Nordnet
@@ -150,10 +168,8 @@ def get_stock_values(stock, index, backtest_data=None):
 def login(stock, creds):
 	global binance_client
 
-	print("Login")
 	if(stock['url'] == 'binance_api'):
 		binance_client = Client(creds['api_key'], creds['api_secret'])
-		print(stock['name'], stock['url'])
 	else:
 		options = webdriver.ChromeOptions()
 		options.add_argument("--DBUS_SESSION_BUS_ADDRESS=/dev/null ")
@@ -167,7 +183,7 @@ def login(stock, creds):
 		nextButton.click()
 		time.sleep(1)
 		stock['browser'].get(stock['url'])
-		print(stock['name'], stock['url'])
+		print("login", stock['name'], stock['url'])
 
 def logout(stock):
 	if(stock['url'] != 'binance_api'):
@@ -175,5 +191,6 @@ def logout(stock):
 
 def refresh(stock):
 	if(stock['url'] != 'binance_api'):
+		print("refresh", stock['name'])
 		stock['browser'].refresh()
 

@@ -49,7 +49,7 @@ def draw_stocks(stock):
 def draw_cci(lng, shrt):
 	global ax3
 
-	bp = algo.get_backtest_params()
+	bp = algo.get_algo_params()
 	cci_u = bp[0][1]
 	cci_d = bp[0][2]
 	cci_b = bp[0][10]
@@ -67,7 +67,7 @@ def draw_cci(lng, shrt):
 def draw_rsi(lng, shrt):
 	global ax4
 
-	bp = algo.get_backtest_params()
+	bp = algo.get_algo_params()
 	rsi = bp[0][8]
 
 	ax4.clear()
@@ -87,7 +87,6 @@ def draw_test(test1, test2, test3):
 	#ax5.axhline(y= 0, color='green', linestyle='dotted')
 	ax5.plot(test1, color="olivedrab", label = "test")
 	ax5.plot(test2, color="olivedrab", label = "test")
-	#ax5.plot(test2, color="steelblue", label = "test")
 	ax5.plot(test3, color="brown", label = "test")
 	ax5.legend(loc="upper left")
 
@@ -103,15 +102,15 @@ def draw(stocks):
 		if(stock['type'] == 'long'):
 			cci_lng  = stock['cci_series']
 			rsi_lng  = stock['rsi_series']
-			test1 = stock['bb_upper']
-			test2 = stock['bb_lower']
-			test3 = stock['bb_spread']
+			#test1 = stock['bb_upper']
+			#test2 = stock['bb_lower']
+			#test3 = stock['buy_series']
 
 		else:
 			cci_shrt = stock['cci_series']
 			rsi_shrt = stock['rsi_series']
 
-	draw_test(test1, test2, test3)
+	#draw_test(test1, test2, test3)
 	draw_cci(cci_lng, cci_shrt)
 	draw_rsi(rsi_lng, rsi_shrt)
 	plt.draw()

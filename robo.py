@@ -40,9 +40,6 @@ alg = algo.set_new_params(stocks)
 
 is_last = False
 
-for stock in stocks:
-	print(stock['name'], stock['url'], stock['transaction_type'])
-
 if(stocks[0]['url'] != 'binance_api'):
 	while(datetime.now() < datetime.now().replace(hour = 9, minute = 15)):
 		print(datetime.now().strftime("%H:%M:%S"), "waiting for Nordnet to open...")
@@ -55,8 +52,13 @@ with open('credentials.json', 'r') as f:
 if(options['do_graph']):
 	graph.init()
 
+
+
 # here we go, login
 for stock in stocks:
+	print datetime.now().strftime("Start %H:%M:%S:"), stock['name'], stock['transaction_type']
+	if(stock['transaction_type'] == 'sell_away'):
+		print("hard_stop_loss", stock['hard_stop_loss'])
 	online.login(stock, creds)
 
 #############################################
@@ -68,7 +70,7 @@ while(not is_last):
 		for stock in stocks:
 			online.get_stock_values(stock, index)
 	except:
-		print("Error fetching data")
+		print(datetime.now().strftime("%H:%M:%S Error fetching data"))
 		time.sleep(sett['wait_fetching_secs'])
 		continue
 	
@@ -85,8 +87,10 @@ while(not is_last):
 				flip = -1
 				reason = 'day_close'
 			else:
-				stock['no_buy']  = datetime.now() > datetime.now().replace(hour = 20, minute = 00)
+				stock['no_buy'] = datetime.now() > datetime.now().replace(hour = 20, minute = 00)
 				flip, reason = algo.check_signals(stock, index, alg)
+		else:
+			flip, reason = algo.check_signals(stock, index, alg)	
 
 		if(flip != 0):
 			money, last_total = common.do_transaction(stock,
@@ -99,7 +103,7 @@ while(not is_last):
 								  index,
 								  options)
 
-	# cross check
+	# cross check for Nordnet bull/bear
 	if(len(stocks) == 2):
 		for stock in stocks:
 			if(stock['type'] == 'long'):
@@ -136,7 +140,6 @@ while(not is_last):
 	# refresh after every 30 ticks / ~5min
 	if(((index+1) % 30) == 0):
 		for stock in stocks:
-			print("refresh", stock['name'])
 			online.refresh(stock)
 
 	# re-login after ~every hour
