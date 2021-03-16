@@ -27,7 +27,7 @@ def get_backtest_files(folder_path, file_name):
 
 def get_backtest_data(file):
 	backtest_data = []
-	spread = 1.001
+	spread = 1.0025
 
 	with open(file, "rb") as fp:
 		for i in fp.readlines():
@@ -63,13 +63,14 @@ options['dry_run'] = True
 
 s = settings.init('settings_backtester.json')
 
-algo.init()
+techs, algos = algo.init()
+
 stocks = common.init_stocks(options)
 
-alg = algo.set_new_params(stocks)
+algo_params = algo.set_new_params(stocks)
 
-if(s['optimize']):
-	alg = algo.optimize_params(alg)
+#if(s['randomize']):
+#	algo_params = algo.randomize_params()
 
 if(options['do_graph']):
 	graph.init()
@@ -83,17 +84,16 @@ if(len(filenames) == 0):
 while(True):
 	closed_deals = []
 	index, money, last_total = 0, 0, 0
-	
+
 	if(file_index < len(filenames)):
+		if(file_index == 0 and s['optimize']):
+			algo_params = algo.optimize_params(s['randomize'])
+
 		backtest_data, entries = get_backtest_data(filenames[file_index])
 		file_index = file_index + 1
 	else:
 		if(s['one_shot']):
 			quit()
-		
-		if(s['optimize']):
-			alg = algo.optimize_params(alg)
-		
 		file_index = 0
 		best_total = 0
 		continue
@@ -111,7 +111,7 @@ while(True):
 				flip = -1
 				reason = 'day_close'
 			else:
-				flip, reason = algo.check_signals(stock, index, alg)
+				flip, reason = algo.check_signals(stock, index, algo_params)
 
 			if(flip != 0):
 				money, last_total = common.do_transaction(stock,
@@ -120,7 +120,7 @@ while(True):
 									money,
 									last_total,
 									closed_deals,
-									alg,
+									algo_params,
 									index,
 									options)
 
@@ -139,7 +139,7 @@ while(True):
 										money,
 										last_total,
 										closed_deals,
-										alg,
+										algo_params,
 										index,
 										options)
 
@@ -150,7 +150,7 @@ while(True):
 										money,
 										last_total,
 										closed_deals,
-										alg,
+										algo_params,
 										index,
 										options)
 		
@@ -162,7 +162,7 @@ while(True):
 		index = index + 1
 
 	last_run = file_index == len(filenames)
-	best_total = common.count_stats(last_run, stocks, last_total, best_total, closed_deals, alg)
+	best_total = common.count_stats(last_run, stocks, last_total, best_total, closed_deals, algo_params)
 
 	if(last_run and s['one_shot']):
 		print("Pausing...")

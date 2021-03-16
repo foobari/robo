@@ -16,16 +16,18 @@ import sys
 from datetime import datetime
 import settings
 import online
+import graph
 
 optimizer_result_best_stat = {}
 optimizer_result_best_algo = {}
 
 #result parameter to optimize to
-#optimizer_stat_to_optimize = 'result_eur'
-optimizer_stat_to_optimize = 'profitability'
+optimizer_stat_to_optimize = 'result_eur'
+#optimizer_stat_to_optimize = 'profitability'
 previous_best_value = -10000
 
 g_closed_deals = []
+
 stats = {}
 stats['sharpe'] = 0
 stats['days'] = 0
@@ -87,6 +89,7 @@ def init_stocks(options):
 		stock['stochastic_k'] = []
 		stock['test'] = []
 		stock['test_sma'] = []
+		stock['pivots'] = []
 		stock['bb_upper'] = []
 		stock['bb_lower'] = []
 		stock['bb_spread'] = []
@@ -161,7 +164,7 @@ def calc_stats(closed_deals):
 
 	return stats
 
-def get_optimizer_vars():
+def get_current_best_optimizer_vars():
 	global optimizer_result_best_algo
 
 	return optimizer_result_best_algo
@@ -173,6 +176,7 @@ def count_stats(final, stocks, last_total, grand_total, closed_deals, algo_param
 	global previous_best_value
 	global optimizer_result_best_stat
 	global optimizer_result_best_algo
+	global optimizer_results_vs_runs
 
 	g_closed_deals.extend(closed_deals)
 
@@ -231,7 +235,7 @@ def count_stats(final, stocks, last_total, grand_total, closed_deals, algo_param
 		current_best_value = optimizer_result_best_stat[optimizer_stat_to_optimize]
 		if(current_best_value > previous_best_value):
 			previous_best_value = current_best_value
-			indicator = 'best * │'
+			indicator = 'best x │'
 		
 		print('{:<0s}{:>5d}{:>8d}{:>9.2%}{:>8.2f}{:>10.2f}{:>10.3f}{:>16.3f}{:>16.3f}   │{:>8.3f}{:>10.3f}{:>9.3f}{:>7.3f}{:>10.3f}{:>8d}{:>10d}{:>10d}{:>10.3f}{:>10.3f}{:>10.3f}'.format(
 					indicator,
@@ -299,6 +303,7 @@ def do_transaction(stock, flip, reason, money, last_total, closed_deals, algo_pa
 		stock['current_top']        = buy
 		stock['last_buy']           = sell
 		stock['hard_stop_loss']	    = ((1 + algo_params['hard'] * stock['leverage'] / 100) * sell)
+		stock['target']             = ((1 + algo_params['target'] * stock['leverage'] / 100) * sell)
 		stock['trailing_stop_loss'] = ((1 + algo_params['trailing'] * stock['leverage'] / 100) * sell)
 		stock['signals_list_buy'].append((index, stock['sell_series'][-1]))
 

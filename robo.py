@@ -26,25 +26,22 @@ import settings
 import online
 
 index, money, last_total, best_total = 0, 0, 0, 0
-
+is_last = False
 
 closed_deals = []	
 
-algo.init() 
+techs, algos = algo.init()
 
 options = common.check_args(sys.argv)
 stocks 	= common.init_stocks(options)
 sett 	= settings.init('settings_robo.json')
 
-alg = algo.set_new_params(stocks)
-
-is_last = False
+algo_params = algo.set_new_params(stocks)
 
 if(stocks[0]['url'] != 'binance_api'):
 	while(datetime.now() < datetime.now().replace(hour = 9, minute = 15)):
 		print(datetime.now().strftime("%H:%M:%S"), "waiting for Nordnet to open...")
 		time.sleep(10)
-
 
 with open('credentials.json', 'r') as f:
 	creds = json.load(f)
@@ -53,19 +50,19 @@ if(options['do_graph']):
 	graph.init()
 
 
-
 # here we go, login
 for stock in stocks:
 	print datetime.now().strftime("Start %H:%M:%S:"), stock['name'], stock['transaction_type']
 	if(stock['transaction_type'] == 'sell_away'):
+		print("target", stock['target'])
+		print("last_buy", stock['last_buy'])
 		print("hard_stop_loss", stock['hard_stop_loss'])
+
 	online.login(stock, creds)
 
-#############################################
 # run for one day max in live trading
-#
 while(not is_last):
-	# live data from Nordnet
+	# live data from Nordnet/Binance
 	try:
 		for stock in stocks:
 			online.get_stock_values(stock, index)
@@ -88,9 +85,9 @@ while(not is_last):
 				reason = 'day_close'
 			else:
 				stock['no_buy'] = datetime.now() > datetime.now().replace(hour = 20, minute = 00)
-				flip, reason = algo.check_signals(stock, index, alg)
+				flip, reason = algo.check_signals(stock, index, algo_params)
 		else:
-			flip, reason = algo.check_signals(stock, index, alg)	
+			flip, reason = algo.check_signals(stock, index, algo_params)	
 
 		if(flip != 0):
 			money, last_total = common.do_transaction(stock,
@@ -99,7 +96,7 @@ while(not is_last):
 								  money,
 								  last_total,
 								  closed_deals,
-								  alg,
+								  algo_params,
 								  index,
 								  options)
 
@@ -118,7 +115,7 @@ while(not is_last):
 									money,
 									last_total,
 									closed_deals,
-									alg,
+									algo_params,
 									index,
 									options)
 
@@ -129,7 +126,7 @@ while(not is_last):
 									money,
 									last_total,
 									closed_deals,
-									alg,
+									algo_params,
 									index,
 									options)
 
@@ -155,7 +152,7 @@ while(not is_last):
 #############################################
 # and exit
 #
-common.count_stats(True, stocks, last_total, best_total, closed_deals, alg)
+common.count_stats(True, stocks, last_total, best_total, closed_deals, algo_params)
 for stock in stocks:
 	online.logout(stock)
 

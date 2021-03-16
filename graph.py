@@ -16,7 +16,6 @@ ax3 = fig.add_subplot(513)
 ax4 = fig.add_subplot(514)
 ax5 = fig.add_subplot(515)
 
-
 def draw_stocks(stock):
 	global ax1, ax2
 	if(stock['type'] == "long"):
@@ -42,8 +41,17 @@ def draw_stocks(stock):
 	else:
 		color = 'steelblue'
 	ax.plot(stock['buy_series'], color = color, label = stock["name"])
-	ax.plot(stock['sma_series_short'], label = "SMA_short", linestyle=':')
-	ax.plot(stock['sma_series_long'],  label = "SMA_long", linestyle=':')
+	#ax.plot(stock['sma_series_short'], label = "SMA_short", linestyle=':')
+	#ax.plot(stock['sma_series_long'],  label = "SMA_long", linestyle=':')
+
+	#ax.axhline(y = stock['pivots'][-1][0], color='green', linestyle='--')
+	#ax.axhline(y = stock['pivots'][-1][1], color='green', linestyle='--')
+	#ax.axhline(y = stock['pivots'][-1][2], color='green', linestyle='--')
+	
+	ax.plot(stock['pivots'])
+	#ax.plot(stock['pp_s1'])
+	#ax.plot(stock['pp_r1'])
+
 	ax.legend(loc="upper left")
 
 def draw_cci(lng, shrt):
@@ -85,9 +93,9 @@ def draw_test(test1, test2, test3):
 	ax5.clear()
 	#ax5.set(ylim=( -0.05, 0.05))
 	#ax5.axhline(y= 0, color='green', linestyle='dotted')
-	ax5.plot(test1, color="olivedrab", label = "test")
-	ax5.plot(test2, color="olivedrab", label = "test")
-	ax5.plot(test3, color="brown", label = "test")
+	ax5.plot(test1, color="black", label = "test")
+	ax5.plot(test2, color="green", label = "test")
+	ax5.plot(test3, color="red", label = "test")
 	ax5.legend(loc="upper left")
 
 
@@ -102,9 +110,9 @@ def draw(stocks):
 		if(stock['type'] == 'long'):
 			cci_lng  = stock['cci_series']
 			rsi_lng  = stock['rsi_series']
-			#test1 = stock['bb_upper']
-			#test2 = stock['bb_lower']
-			#test3 = stock['buy_series']
+			#test1 = stock['pp_pp']
+			#test2 = stock['pp_r1']
+			#test3 = stock['pp_s1']
 
 		else:
 			cci_shrt = stock['cci_series']

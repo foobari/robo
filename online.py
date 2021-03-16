@@ -138,7 +138,8 @@ def get_stock_values(stock, index, backtest_data=None):
 			trades = binance_client.get_aggregate_trades(symbol=stock['name'])
 			buy  = float(trades[-1]['p'])
 			# Use standard spread to simulate binance trading fees
-			spread = 1.001
+			#spread = 1.0001
+			spread = 1.0025
 			sell = buy * spread
 			stock['buy_series'].append(buy)
 			stock['sell_series'].append(sell)
