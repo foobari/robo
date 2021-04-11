@@ -10,6 +10,8 @@ import numpy as np
 import os,glob
 import json 
 import pdb
+from datetime import datetime
+from datetime import timedelta
 
 import algo
 import graph
@@ -17,15 +19,22 @@ import common
 import settings
 import online
 
+filecount = 0
+fileindex = 0
 
 def get_backtest_files(folder_path, file_name):
+	global filecount
 	files = []
+
 	for file in glob.glob(os.path.join(folder_path, file_name)):
 		files.append(file)
-
+		filecount += 1
 	return files
 
+
 def get_backtest_data(file):
+	global filecount
+	global fileindex
 	backtest_data = []
 	spread = 1.0025
 
@@ -47,7 +56,7 @@ def get_backtest_data(file):
 		fp.close()
 
 	entries = len(backtest_data)
-	print("open backtest file", file, entries)
+	print('file {:<1d}/{:<2d} {:s} ({:d})'.format(fileindex, filecount - 1, file, entries))
 	return backtest_data, entries
 
 	
@@ -56,7 +65,7 @@ def get_backtest_data(file):
 #					prog start						  #
 ###################################################################################################
 filenames = []
-file_index, best_total = 0, 0
+best_total = 0
 
 options = common.check_args(sys.argv)
 options['dry_run'] = True
@@ -81,22 +90,27 @@ if(len(filenames) == 0):
 	print "No input file(s) found"
 	quit()
 
+
 while(True):
 	closed_deals = []
 	index, money, last_total = 0, 0, 0
 
-	if(file_index < len(filenames)):
-		if(file_index == 0 and s['optimize']):
+	if(fileindex < len(filenames)):
+		if(fileindex == 0 and s['optimize']):
 			algo_params = algo.optimize_params(s['randomize'])
 
-		backtest_data, entries = get_backtest_data(filenames[file_index])
-		file_index = file_index + 1
+		backtest_data, entries = get_backtest_data(filenames[fileindex])
+		fileindex = fileindex + 1
 	else:
 		if(s['one_shot']):
 			quit()
-		file_index = 0
+
+
+		fileindex = 0
 		best_total = 0
+		start_time = time.time()
 		continue
+
 
 	stocks = common.init_stocks(options)
 
@@ -161,7 +175,7 @@ while(True):
 
 		index = index + 1
 
-	last_run = file_index == len(filenames)
+	last_run = fileindex == len(filenames)
 	best_total = common.count_stats(last_run, stocks, last_total, best_total, closed_deals, algo_params)
 
 	if(last_run and s['one_shot']):

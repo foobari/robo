@@ -14,6 +14,7 @@ import json
 import pandas as pd
 import getopt
 import sys
+import algo
 
 binance_client = []
 
@@ -26,35 +27,44 @@ def execute_buy_order_online(stock):
 		if(stock['name'] == "DOGEUSDT"):
 			amount = stock['transaction_size']
 			order = binance_client.order_market_buy(symbol='DOGEUSDT', quantity = amount)
-			print order
-			print
+			lot_price = float(order['cummulativeQuoteQty'])
+			share_price = lot_price / amount
+			print "setting:"
+			stock['last_buy'] = share_price
+			algo_params = algo.get_params()
+			stock['hard_stop_loss']	    = ((1 + algo_params['hard'] * stock['leverage'] / 100) * share_price)
+			stock['target']             = ((1 + algo_params['target'] * stock['leverage'] / 100) * share_price)
+			stock['trailing_stop_loss'] = ((1 + algo_params['trailing'] * stock['leverage'] / 100) * share_price)
+			print "buy price to", share_price
+			print "target", stock['target']
+			print "stoploss", stock['hard_stop_loss']
 		else:
 			print "not supported", stock['name']
 
 	else:
 
 		# click buy
-		WebDriverWait(stock['browser'], 10).until(EC.presence_of_element_located((By.XPATH, '//*[@id="main-content"]/div[1]/div[1]/div/div/div/div/div/div[2]/div[2]/div[1]/a'))).click()
+		WebDriverWait(stock['browser'], 10).until(EC.presence_of_element_located((By.XPATH, '//*[@id="main-content"]/div/div[1]/div/div/div/div[3]/div/div[2]/div[2]/div/div[1]/a'))).click()
 		print("buy", stock['name'])
 
 		# select account
 		time.sleep(0.1)
-		Select(WebDriverWait(stock['browser'], 10).until(EC.presence_of_element_located((By.XPATH, '//*[@id="main-content"]/div[2]/div/div/div[3]/div/div/div/div[1]/div[1]/div/div/div/select')))).select_by_value(stock['account'])
+		WebDriverWait(stock['browser'], 10).until(EC.presence_of_element_located((By.XPATH, '//*[@id="instrument-order-accounts-select"]'))).click()
+		time.sleep(0.1)
+		WebDriverWait(stock['browser'], 10).until(EC.presence_of_element_located((By.XPATH, '//*[@id="instrument-order-accounts-select-option-1"]'))).click()
 		print("account", stock['account'])
 		
 		# quantity
 		time.sleep(0.1)
 		amount = stock['transaction_size']
-		WebDriverWait(stock['browser'], 10).until(EC.presence_of_element_located((By.XPATH, '//*[@id="main-content"]/div[2]/div/div/div[3]/div/div/div/div[2]/div[1]/div[1]/div[2]/div/input'))).send_keys(str(amount))
+		WebDriverWait(stock['browser'], 10).until(EC.presence_of_element_located((By.XPATH, '//*[@id="volume"]'))).send_keys(str(amount))
 		print("amount", str(amount))
 
-		# price
-		# price = 2.11
-		# WebDriverWait(stock['browser'], 10).until(EC.presence_of_element_located((By.XPATH, '//*[@id="main-content"]/div[2]/div/div/div[3]/div/div/div/div[2]/div[1]/div[2]/div[2]/div/input'))).send_keys(str(price))
+		# buy @market price, no need to set it
 
-		# execute	
+		#execute
 		time.sleep(0.5)
-		WebDriverWait(stock['browser'], 10).until(EC.presence_of_element_located((By.XPATH, '//*[@id="main-content"]/div[2]/div/div/div[3]/div/div/div/div[2]/div[7]/span/button/div/span'))).click()
+		WebDriverWait(stock['browser'], 10).until(EC.presence_of_element_located((By.XPATH, '//*[@id="main-content"]/div/div[2]/div/div/div/div/div[3]/div/div[1]/div/div/div/form/div[2]/div[1]/div[2]/button'))).click()
 		print("execute")
 
 		# return
@@ -78,34 +88,37 @@ def execute_sell_order_online(stock):
 
 	else:
 		# click sell
-		WebDriverWait(stock['browser'], 10).until(EC.presence_of_element_located((By.XPATH, '//*[@id="main-content"]/div[1]/div[1]/div/div/div/div/div/div[2]/div[2]/div[2]/a'))).click()
+		WebDriverWait(stock['browser'], 10).until(EC.presence_of_element_located((By.XPATH, '//*[@id="main-content"]/div/div[1]/div/div/div/div[3]/div/div[2]/div[2]/div/div[2]/a'))).click()
 		print("sell", stock['name'])
 
 		# select account
 		time.sleep(0.1)
-		Select(WebDriverWait(stock['browser'], 10).until(EC.presence_of_element_located((By.XPATH, '//*[@id="main-content"]/div[2]/div/div/div[3]/div/div/div/div[1]/div[1]/div/div/div/select')))).select_by_value(stock['account'])
+		WebDriverWait(stock['browser'], 10).until(EC.presence_of_element_located((By.XPATH, '//*[@id="instrument-order-accounts-select"]'))).click()
+		time.sleep(0.1)
+		WebDriverWait(stock['browser'], 10).until(EC.presence_of_element_located((By.XPATH, '//*[@id="instrument-order-accounts-select-option-1"]'))).click()
+
+
+		#Select(WebDriverWait(stock['browser'], 10).until(EC.presence_of_element_located((By.XPATH, '//*[@id="main-content"]/div/div[2]/div/div/div/div/div[1]/div/div/div[1]/div/div/form/div[1]/div/div[1]/div/select')))).select_by_value(stock['account'])
 		print("account", stock['account'])
 
 		# quantity
 		time.sleep(0.1)
 		amount = stock['transaction_size']
-		WebDriverWait(stock['browser'], 10).until(EC.presence_of_element_located((By.XPATH, '//*[@id="main-content"]/div[2]/div/div/div[3]/div/div/div/div[2]/div[1]/div[1]/div[2]/div/input'))).send_keys(str(amount))
+		WebDriverWait(stock['browser'], 10).until(EC.presence_of_element_located((By.XPATH, '//*[@id="volume"]'))).send_keys(str(amount))
 		print("amount", str(amount))
 
-		# price
-		#price = 4.00
-		#WebDriverWait(stock['browser'], 10).until(EC.presence_of_element_located((By.XPATH, '//*[@id="main-content"]/div[2]/div/div/div[3]/div/div/div/div[2]/div[1]/div[2]/div[2]/div/input'))).send_keys(u'\ue009' + u'\ue003')
-		#WebDriverWait(stock['browser'], 10).until(EC.presence_of_element_located((By.XPATH, '//*[@id="main-content"]/div[2]/div/div/div[3]/div/div/div/div[2]/div[1]/div[2]/div[2]/div/input'))).send_keys(str(price))
+		# sell @market price, no need to set it
 
 		#execute
 		time.sleep(0.5)
-		WebDriverWait(stock['browser'], 10).until(EC.presence_of_element_located((By.XPATH, '//*[@id="main-content"]/div[2]/div/div/div[3]/div/div/div/div[2]/div[7]/span/button/div/span'))).click()
+		WebDriverWait(stock['browser'], 10).until(EC.presence_of_element_located((By.XPATH, '//*[@id="main-content"]/div/div[2]/div/div/div/div/div[3]/div/div[1]/div/div/div/form/div[2]/div[1]/div[2]/button'))).click()
 		print("execute")
 
 		# return
 		time.sleep(0.1)
 		stock['browser'].get(stock['url'])
-	
+
+
 
 def stock_sanity_check(stock, index):
 	if((stock['buy_series'][-1] == 0)):
@@ -145,8 +158,8 @@ def get_stock_values(stock, index, backtest_data=None):
 			stock['sell_series'].append(sell)
 		# Nordnet
 		else:
-			buy  = float(stock['browser'].find_element(By.XPATH, '//*[@id="main-content"]/div[1]/div[2]/div/div[1]/div[1]/div/div[4]/div/span[2]/span/span[2]').text.replace(',','.'))
-			sell = float(stock['browser'].find_element(By.XPATH, '//*[@id="main-content"]/div[1]/div[2]/div/div[1]/div[1]/div/div[5]/div/span[2]/span/span[2]').text.replace(',','.'))
+			buy  = float(stock['browser'].find_element(By.XPATH, '//*[@id="main-content"]/div/div[1]/div/div/div/div[3]/div/div[1]/div[1]/div/div/span').text.replace(',','.'))
+			sell = float(stock['browser'].find_element(By.XPATH, '//*[@id="main-content"]/div/div[1]/div/div/div/div[3]/div/div[1]/div[2]/div/div/span').text.replace(',','.'))
 
 			if(index == 0 and (buy < 0.01 or sell < 0.01)):
 				raise Exception("First value zero")

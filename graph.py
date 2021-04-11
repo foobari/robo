@@ -41,8 +41,8 @@ def draw_stocks(stock):
 	else:
 		color = 'steelblue'
 	ax.plot(stock['buy_series'], color = color, label = stock["name"])
-	#ax.plot(stock['sma_series_short'], label = "SMA_short", linestyle=':')
-	#ax.plot(stock['sma_series_long'],  label = "SMA_long", linestyle=':')
+	ax.plot(stock['sma_series_short'], label = "SMA_short", linestyle=':')
+	ax.plot(stock['sma_series_long'],  label = "SMA_long", linestyle=':')
 
 	#ax.axhline(y = stock['pivots'][-1][0], color='green', linestyle='--')
 	#ax.axhline(y = stock['pivots'][-1][1], color='green', linestyle='--')
@@ -57,10 +57,10 @@ def draw_stocks(stock):
 def draw_cci(lng, shrt):
 	global ax3
 
-	bp = algo.get_algo_params()
-	cci_u = bp[0][1]
-	cci_d = bp[0][2]
-	cci_b = bp[0][10]
+	bp = algo.get_params()
+	cci_u = bp['cci_up']# bp[0][1]
+	cci_d = bp['cci_down']# [0][2]
+	cci_b = bp['cci_big'] #bp[0][10]
 
 	ax3.clear()
 	ax3.set(ylim=(-330, 330))
@@ -75,14 +75,13 @@ def draw_cci(lng, shrt):
 def draw_rsi(lng, shrt):
 	global ax4
 
-	bp = algo.get_algo_params()
-	rsi = bp[0][8]
-
+	bp = algo.get_params()
 	ax4.clear()
-	ax4.set(ylim=( 30, 70))
+	ax4.set(ylim=( 25, 75))
 	ax4.axhline(y=  50, color='green', linestyle='dotted')
-	ax4.axhline(y= rsi, color='red', linestyle='dotted')
-	ax4.axhline(y= 100-rsi, color='red', linestyle='dotted')
+	ax4.axhline(y= bp['rsi_lim'], color='red', linestyle='dotted')
+	ax4.axhline(y= 100-bp['rsi_lim'], color='red', linestyle='dotted')
+	ax4.axhline(y= bp['rsi_big'], color='brown', linestyle='dotted')
 	ax4.plot(lng,  color="olivedrab", label = "rsi_series (bull)")
 	ax4.plot(shrt, color="steelblue", label = "rsi_series (bear)")
 	ax4.legend(loc="upper left")

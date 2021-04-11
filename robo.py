@@ -53,6 +53,10 @@ if(options['do_graph']):
 # here we go, login
 for stock in stocks:
 	print datetime.now().strftime("Start %H:%M:%S:"), stock['name'], stock['transaction_type']
+	if(stock['buy_full_money'] == True):
+		print("transaction_money", stock['transaction_money'])
+	else:
+		print("transaction_size", stock['transaction_size'])
 	if(stock['transaction_type'] == 'sell_away'):
 		print("target", stock['target'])
 		print("last_buy", stock['last_buy'])

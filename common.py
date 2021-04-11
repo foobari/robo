@@ -21,14 +21,17 @@ import graph
 optimizer_result_best_stat = {}
 optimizer_result_best_algo = {}
 
+start_time = time.time()
+
 #result parameter to optimize to
-optimizer_stat_to_optimize = 'result_eur'
-#optimizer_stat_to_optimize = 'profitability'
+#optimizer_stat_to_optimize = 'result_eur'
+optimizer_stat_to_optimize = 'magic'
 previous_best_value = -10000
 
 g_closed_deals = []
 
 stats = {}
+stats['magic'] = 0
 stats['sharpe'] = 0
 stats['days'] = 0
 stats['profitability'] = 0
@@ -124,7 +127,7 @@ def calc_stats(closed_deals):
 	all_buys  = 0
 	all_sells = 0
 	
-	if(len(closed_deals) > 0):
+	if(len(closed_deals) > 0 and stats['days'] > 0):
 		for deal in closed_deals:
 			buy, sell, res = get_deal_result(deal)
 			all_buys  += buy
@@ -152,6 +155,7 @@ def calc_stats(closed_deals):
 		stats['result_eur'] =  all_sells - all_buys
 		stats['result_per'] = (all_sells - all_buys) / all_buys
 		stats['deals'] = len(closed_deals)
+		stats['magic'] = 100 * stats['result_eur'] * stats['profitability'] * stats['sharpe'] / stats['days']
 	else:
 		stats['sharpe']        = 0
 		stats['profit_factor'] = 0
@@ -160,6 +164,7 @@ def calc_stats(closed_deals):
 		stats['all_sells']     = 0
 		stats['result_eur']    = 0
 		stats['result_per']    = 0
+		stats['magic']         = 0
 		stats['deals'] 	       = 0
 
 	return stats
@@ -177,6 +182,7 @@ def count_stats(final, stocks, last_total, grand_total, closed_deals, algo_param
 	global optimizer_result_best_stat
 	global optimizer_result_best_algo
 	global optimizer_results_vs_runs
+
 
 	g_closed_deals.extend(closed_deals)
 
@@ -198,13 +204,14 @@ def count_stats(final, stocks, last_total, grand_total, closed_deals, algo_param
 			id = "T0"
 
 		print
-		print("       │ days   deals   profit   eur/d   deals/d    sharpe   profitability   profit_factor   │   cci_u     cci_d   target   hard  trailing   cci_w   sma_len   rsi_len   rsi_lim   cci_big   rsi_big")
+		print("       │ days   deals    magic   eur/d   deals/d    sharpe   profitability   profit_factor   │   cci_u     cci_d   target   hard  trailing   cci_w   sma_len   rsi_len   rsi_lim   cci_big   rsi_big")
 		print("───────┼─────────────────────────────────────────────────────────────────────────────────────┼──────────────────────────────────────────────────────────────────────────────────────────────────────")
-		print('{:<2s}     │{:>5d}{:>8d}{:>9.2%}{:>8.2f}{:>10.2f}{:>10.3f}{:>16.3f}{:>16.3f}   │{:>8.3f}{:>10.3f}{:>9.3f}{:>7.3f}{:>10.3f}{:>8d}{:>10d}{:>10d}{:>10.3f}{:>10.3f}{:>10.3f}'.format(
+		print('{:<2s}     │{:>5d}{:>8d}{:>9.3f}{:>8.2f}{:>10.2f}{:>10.3f}{:>16.3f}{:>16.3f}   │{:>8.3f}{:>10.3f}{:>9.3f}{:>7.3f}{:>10.3f}{:>8d}{:>10d}{:>10d}{:>10.3f}{:>10.3f}{:>10.3f}'.format(
 					id,
 					stats['days'],
 					len(g_closed_deals),
-					stats['result_per'],
+					#stats['result_per'],
+					stats['magic'],
 					stats['result_eur']/stats['days'],
 					float(stats['deals'])/float(stats['days']),
 					stats['sharpe'],
@@ -237,11 +244,12 @@ def count_stats(final, stocks, last_total, grand_total, closed_deals, algo_param
 			previous_best_value = current_best_value
 			indicator = 'best x │'
 		
-		print('{:<0s}{:>5d}{:>8d}{:>9.2%}{:>8.2f}{:>10.2f}{:>10.3f}{:>16.3f}{:>16.3f}   │{:>8.3f}{:>10.3f}{:>9.3f}{:>7.3f}{:>10.3f}{:>8d}{:>10d}{:>10d}{:>10.3f}{:>10.3f}{:>10.3f}'.format(
+		print('{:<0s}{:>5d}{:>8d}{:>9.3f}{:>8.2f}{:>10.2f}{:>10.3f}{:>16.3f}{:>16.3f}   │{:>8.3f}{:>10.3f}{:>9.3f}{:>7.3f}{:>10.3f}{:>8d}{:>10d}{:>10d}{:>10.3f}{:>10.3f}{:>10.3f}'.format(
 					indicator,
 					optimizer_result_best_stat['days'],
 					optimizer_result_best_stat['deals'],
-					optimizer_result_best_stat['result_per'],
+					#optimizer_result_best_stat['result_per'],
+					optimizer_result_best_stat['magic'],
 					optimizer_result_best_stat['result_eur']/optimizer_result_best_stat['days'],
 					float(optimizer_result_best_stat['deals'])/float(optimizer_result_best_stat['days']),
 					optimizer_result_best_stat['sharpe'],
@@ -323,8 +331,6 @@ def do_transaction(stock, flip, reason, money, last_total, closed_deals, algo_pa
 		stock['stocks'] = stock['transaction_size']
 		if(not options['dry_run']):
 			online.execute_buy_order_online(stock)
-
-		
 
 	# sell
 	if(stock['active_position'] and (flip == -1)):
