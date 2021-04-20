@@ -3,7 +3,7 @@ from collections import OrderedDict
 import random
 import math
 import numpy as np
-import scipy
+#import scipy
 import common
 import time
 
@@ -137,7 +137,7 @@ def optimize_params(randomize_params_start_values = False):
 		optimizer_steps  =  int(random.uniform(optimizer_window_steps_min,       optimizer_window_steps_max))
 		#optimizer_window  = 50
 		#optimizer_steps   = 50
-		print("Randomized window: ±", optimizer_window, "%, steps: ", optimizer_steps+1)
+		print("Randomized window: +-", optimizer_window, "%, steps: ", optimizer_steps+1)
 
 	# If param optimizing run is done, change to optimal value, move to next
 	if(optimizer_runs == (optimizer_steps+1)):
