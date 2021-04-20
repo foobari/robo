@@ -2,10 +2,9 @@ from lxml import html
 import requests
 import time
 import sys
-import pandas as pd
 import matplotlib.pyplot as plt
 import matplotlib.ticker as ticker
-import pandas_datareader as web
+#import pandas_datareader as web
 import numpy as np
 import os,glob
 import json 
@@ -36,15 +35,18 @@ def get_backtest_data(file):
 	global filecount
 	global fileindex
 	backtest_data = []
-	spread = 1.0025
+	spread = 1.002
 
-	with open(file, "rb") as fp:
+	
+	with open(file, "r") as fp:
 		for i in fp.readlines():
-			tmp = i.replace('(','')
-			tmp = tmp.replace(')','')
-			tmp = tmp.replace('\n','')
-			tmp = tmp.replace(' ','')
-			tmp = tmp.split(",")
+			tmp = i
+			tmp = str(tmp).replace('(','')
+			tmp = str(tmp).replace(')','')
+			tmp = str(tmp).replace('\n','')
+			tmp = str(tmp).replace(' ','')
+			tmp = str(tmp).split(",")
+
 			try:	
 				if(len(tmp) == 4):
 					backtest_data.append((float(tmp[0]), float(tmp[1]), float(tmp[2]), float(tmp[3])))
@@ -87,7 +89,7 @@ if(options['do_graph']):
 # get file(s)
 filenames = get_backtest_files(s['file_dir'], s['file_name'])
 if(len(filenames) == 0):
-	print "No input file(s) found"
+	print("No input file(s) found")
 	quit()
 
 

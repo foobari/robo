@@ -1,10 +1,10 @@
 # -*- coding: iso-8859-15 -*-
 from lxml import html
-from selenium import webdriver
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
-from selenium.webdriver.support.ui import Select
+#from selenium import webdriver
+#from selenium.webdriver.common.by import By
+#from selenium.webdriver.support.ui import WebDriverWait
+#from selenium.webdriver.support import expected_conditions as EC
+#from selenium.webdriver.support.ui import Select
 import requests
 import numpy as np
 import math
@@ -81,6 +81,8 @@ def init_stocks(options):
 		stock['rsi_series'] = []
 		stock['cci_ptyp'] = []
 		stock['hurst'] = []
+		stock['win_high'] = []
+		stock['win_low'] = []		
 		stock['hh'] = []
 		stock['hh_sma'] = []
 		stock['bias'] = []
@@ -127,7 +129,8 @@ def calc_stats(closed_deals):
 	all_buys  = 0
 	all_sells = 0
 	
-	if(len(closed_deals) > 0 and stats['days'] > 0):
+	#if(len(closed_deals) > 0 and stats['days'] > 0):
+	if(len(closed_deals) > 0):
 		for deal in closed_deals:
 			buy, sell, res = get_deal_result(deal)
 			all_buys  += buy
@@ -156,6 +159,8 @@ def calc_stats(closed_deals):
 		stats['result_per'] = (all_sells - all_buys) / all_buys
 		stats['deals'] = len(closed_deals)
 		stats['magic'] = 100 * stats['result_eur'] * stats['profitability'] * stats['sharpe'] / stats['days']
+		if(stats['magic'] > 0 and stats['result_eur'] < 0):
+			stats['magic'] *= -1
 	else:
 		stats['sharpe']        = 0
 		stats['profit_factor'] = 0
@@ -183,14 +188,12 @@ def count_stats(final, stocks, last_total, grand_total, closed_deals, algo_param
 	global optimizer_result_best_algo
 	global optimizer_results_vs_runs
 
-
+	stats['days'] = stats['days'] + 1
 	g_closed_deals.extend(closed_deals)
 
 	stats = calc_stats(closed_deals)
 
 	print('{:.2%}'.format(stats['result_per']), round(stats['all_buys'], 2), round(stats['all_sells'], 2), round(stats['result_eur'], 2), len(closed_deals), round(stats['sharpe'], 2), round(stats['profitability'], 2), round(stats['profit_factor'], 2))
-
-	stats['days'] = stats['days'] + 1
 
 	if(final):
 		stats = calc_stats(g_closed_deals)
@@ -286,7 +289,7 @@ def post_to_toilet(time, action, name, amount, price):
 			"price": price
 		}
 		resp = requests.post(url, json=data)
-		print resp
+		print(resp)
 
 def print_decision_vars(stock):
 	if(False):
@@ -313,6 +316,7 @@ def do_transaction(stock, flip, reason, money, last_total, closed_deals, algo_pa
 		stock['hard_stop_loss']	    = ((1 + algo_params['hard'] * stock['leverage'] / 100) * sell)
 		stock['target']             = ((1 + algo_params['target'] * stock['leverage'] / 100) * sell)
 		stock['trailing_stop_loss'] = ((1 + algo_params['trailing'] * stock['leverage'] / 100) * sell)
+
 		stock['signals_list_buy'].append((index, stock['sell_series'][-1]))
 
 		if(stock['buy_full_money'] == True):
@@ -394,11 +398,11 @@ def check_args(argv):
 	try:
 		opts, args = getopt.getopt(argv[1:],"hgdazi:o:", ["dry-run"])
 	except getopt.GetoptError:
-		print 'test.py -i <inputfile> -o <outputfile>'
+		print('test.py -i <inputfile> -o <outputfile>')
 		sys.exit(2)
 	for opt, arg in opts:
 		if opt == '-h':
-			print argv[0], '-i <inputfile> -o <outputfile>'
+			print(argv[0], '-i <inputfile> -o <outputfile>')
 			sys.exit()
 		elif opt in ("-i"):
 			options['inputfile'] = arg
@@ -414,7 +418,7 @@ def check_args(argv):
 			options['dry_run'] = True
 
 	if(options['inputfile'] == ''):
-			print argv[0], '-i <inputfile> -o <outputfile>'
+			print(argv[0], '-i <inputfile> -o <outputfile>')
 			sys.exit()
 
 	return options

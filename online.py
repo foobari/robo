@@ -1,17 +1,17 @@
 from binance.client import Client
 from binance.enums import *
 from lxml import html
-from selenium import webdriver
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
-from selenium.webdriver.support.ui import Select
+#from selenium import webdriver
+#from selenium.webdriver.common.by import By
+#from selenium.webdriver.support.ui import WebDriverWait
+#from selenium.webdriver.support import expected_conditions as EC
+#from selenium.webdriver.support.ui import Select
 import numpy as np
 import os
 import math
 import time
 import json
-import pandas as pd
+#import pandas as pd
 import getopt
 import sys
 import algo
@@ -29,17 +29,17 @@ def execute_buy_order_online(stock):
 			order = binance_client.order_market_buy(symbol='DOGEUSDT', quantity = amount)
 			lot_price = float(order['cummulativeQuoteQty'])
 			share_price = lot_price / amount
-			print "setting:"
+			print("setting:")
 			stock['last_buy'] = share_price
 			algo_params = algo.get_params()
 			stock['hard_stop_loss']	    = ((1 + algo_params['hard'] * stock['leverage'] / 100) * share_price)
 			stock['target']             = ((1 + algo_params['target'] * stock['leverage'] / 100) * share_price)
 			stock['trailing_stop_loss'] = ((1 + algo_params['trailing'] * stock['leverage'] / 100) * share_price)
-			print "buy price to", share_price
-			print "target", stock['target']
-			print "stoploss", stock['hard_stop_loss']
+			print("buy price to", share_price)
+			print("target", stock['target'])
+			print("stoploss", stock['hard_stop_loss'])
 		else:
-			print "not supported", stock['name']
+			print("not supported", stock['name'])
 
 	else:
 
@@ -81,10 +81,10 @@ def execute_sell_order_online(stock):
 		if(stock['name'] == "DOGEUSDT"):
 			amount = stock['transaction_size']
 			order = binance_client.order_market_sell(symbol = 'DOGEUSDT', quantity = amount)
-			print order
-			print "------------------------"
+			print(order)
+			print("------------------------")
 		else:
-			print "not supported", stock['name']
+			print("not supported", stock['name'])
 
 	else:
 		# click sell
@@ -152,7 +152,7 @@ def get_stock_values(stock, index, backtest_data=None):
 			buy  = float(trades[-1]['p'])
 			# Use standard spread to simulate binance trading fees
 			#spread = 1.0001
-			spread = 1.0025
+			spread = 1.002
 			sell = buy * spread
 			stock['buy_series'].append(buy)
 			stock['sell_series'].append(sell)

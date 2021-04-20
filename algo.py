@@ -37,16 +37,16 @@ param_names = [ 'name',		#0
 		'rsi_big']	#11
 
 # optimizer window/step
-optimizer_window_percentage_min =    5
-optimizer_window_percentage_max =   30
-optimizer_window_steps_min      =    5
-optimizer_window_steps_max      =   20
+optimizer_window_percentage_min =   5
+optimizer_window_percentage_max =   5
+optimizer_window_steps_min      =   50
+optimizer_window_steps_max      =   50
 
 # parameter list to optimize
-params_idx = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
+#params_idx = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
 #params_idx = [1, 2, 3, 4, 5, 9, 10, 11]
 #params_idx = [8,9]
-#params_idx = [5]
+params_idx = [1,2,3,4,5,7,9]
 
 def set_new_params(stocks):
 	global optimizer_params
@@ -62,7 +62,7 @@ def set_new_params(stocks):
 		index += 1
 
 	if(index >= len(bp)):
-		print "No matching algo, exit"
+		print("No matching algo, exit")
 		quit()
 
 	p['name'] 	= bp[index][0]
@@ -78,7 +78,7 @@ def set_new_params(stocks):
 	p['cci_big'] 	= bp[index][10]
 	p['rsi_big'] 	= bp[index][11]
 
-	print "Parameters", p
+	print("Parameters", p)
 	
 	optimizer_params = p.copy()
 
@@ -100,7 +100,7 @@ def randomize_params():
 	p['cci_big'] 	=  random.uniform(100, 200)
 	p['rsi_big'] 	=  random.uniform(30, 50)
 
-	print "Randomized", p
+	print("Randomized", p)
 
 	optimizer_params = p.copy()
 
@@ -127,17 +127,17 @@ def optimize_params(randomize_params_start_values = False):
 
 	if(optimizer_runs == 0):
 		if(randomize_params_start_values):
-			print "Randomized parameter start values"	
+			print("Randomized parameter start values")
 			algo_params = randomize_params()
 
 		params_idx = random.sample(params_idx, len(params_idx))
-		print "Randomized order", params_idx
+		print("Randomized order", params_idx)
 
 		optimizer_window =  int(random.uniform(optimizer_window_percentage_min,  optimizer_window_percentage_max))
 		optimizer_steps  =  int(random.uniform(optimizer_window_steps_min,       optimizer_window_steps_max))
-		#optimizer_window  = 10
-		#optimizer_steps   = 5
-		print "Randomized window: ±", optimizer_window, "%, steps: ", optimizer_steps+1
+		#optimizer_window  = 50
+		#optimizer_steps   = 50
+		print("Randomized window: ±", optimizer_window, "%, steps: ", optimizer_steps+1)
 
 	# If param optimizing run is done, change to optimal value, move to next
 	if(optimizer_runs == (optimizer_steps+1)):
@@ -189,7 +189,7 @@ def optimize_params(randomize_params_start_values = False):
 	optimizer_runs += 1
 
 	xs = ' ' * 100 + ' ' * 9 * (params_idx[optimizer_param] - 1) + '^'
-	print xs
+	print(xs)
 
 	b_spaces = '-' * (optimizer_runs - 1)
 	a_spaces = '-' * (temp_steps + 1 - optimizer_runs)
@@ -203,7 +203,7 @@ def optimize_params(randomize_params_start_values = False):
 		optimizer_runs - 1,  temp_steps,
 		param_names[params_idx[optimizer_param]], p[param_names[params_idx[optimizer_param]]],
 		round(win_min, 3), round(win_max, 3), round(win_step, 3)))
-	print optimizer_bigruns, progress_pars, progress_runs
+	print(optimizer_bigruns, progress_pars, progress_runs)
 
 	return p
 
@@ -226,7 +226,7 @@ def init():
 		 #calc_stochastic,
 		]
 
-	algos = [algo_rsi_trigger,
+	algos = [#algo_rsi_trigger,
 		 algo_cci_trigger,
 		 #algo_pivots,
 		 #algo_bb,
@@ -247,12 +247,55 @@ def get_algo_params():
 	# 	cci_up	    cci_down    target    hard   trailing    cci_w    sma_len    rsi_len    rsi_lim    cci_big    rsi_big
 	algo_params = (
 	#('dax',   999.999,  -140.598,    0.969, -0.780,    -0.677,      81,       104,       188,    28.650,   238.655,    39.745), # dax.65
-	('doge',   179.884,  -256.508,    2.083, -2.202,    -3.076,      69,       190,       337,    44.780,   133.456,    39.693), # doge.45
-	('btc',    134.311,  -138.123,    5.707, -1.625,    -1.715,      69,       142,       180,    29.869,   314.882,    42.664), # btc.46
+	#('doge',   179.884,  -254.743,    2.120, -2.202,    -3.156,      69,       183,       337,    44.780,   133.456,    39.693), # doge.50
+	('doge',   204.318,  -132.394,    2.595, -2.351,    -2.679,      68,       121,       178,    51.098,   133.456,    39.693), # dogetest
+	('btc',    147.329,  -138.338,    5.587, -1.632,    -2.159,      69,       142,       180,    29.869,   314.882,    42.664), # btc.49
 	)
 	return algo_params
 
+def algo_cci_trigger(stock, index, algo_params):
+	flip = 0
+	reason = ""
 
+	SMA_LONG = algo_params['sma_len']
+	buy  = float(stock['buy_series'][-1])
+	sell = float(stock['sell_series'][-1])
+
+	if(index > SMA_LONG):
+		if(not stock['active_position'] and not stock['no_buy']):
+			if((stock['cci_series'][-2] < algo_params['cci_down']) and (stock['cci_series'][-1] >= algo_params['cci_down']) and
+			    #stock['rsi_series'][-1] > 50.888):
+			    stock['rsi_series'][-1] > algo_params['rsi_lim']):
+				if(buy > stock['sma_series_long'][-1]):
+					reason = "cci_buy"
+					flip = 1
+
+		if(stock['active_position']):
+			if((stock['cci_series'][-2] > algo_params['cci_up']) and (stock['cci_series'][-1] <= algo_params['cci_up'])):
+				if(buy < float(stock['sma_series_long'][-1])):
+					reason = "cci_sell"
+					flip = -1
+		# remove for now
+		#if(not stock['active_position'] and not stock['no_buy']):
+		#	if(stock['cci_series'][-1] < -algo_params['cci_big'] and stock['rsi_series'][-1] < algo_params['rsi_big']):
+		#			reason = "cci_big"
+		#			flip = 1
+
+		'''
+		if(stock['active_position']):
+			if(stock['cci_series'][-1] > algo_params['cci_big'] and stock['rsi_series'][-1] > (100 - algo_params['rsi_big'])):
+				reason = "cci_big"
+				flip = -1
+
+
+		if(stock['cci_series'][-2] < -algo_params['cci_big'] and stock['cci_series'][-1] > -algo_params['cci_big'] and
+			stock['rsi_series'][-1] < algo_params['rsi_big']):
+			reason = "cci_big"
+			flip = 1
+		'''
+	return flip, reason
+
+'''
 def algo_pivots(stock, index, algo_params):
 	flip = 0
 	reason = ""
@@ -277,7 +320,7 @@ def algo_pivots(stock, index, algo_params):
 					print "new target", stock['target']
 
 
-		'''		
+
 		# break level up
 		for i in (stock['pivots'][-1][5], stock['pivots'][-1][6]):
 			if(stock['buy_series'][-2] < i and stock['buy_series'][-1] > i):
@@ -289,8 +332,9 @@ def algo_pivots(stock, index, algo_params):
 			if(stock['buy_series'][-2] > i and stock['buy_series'][-1] < i):
 				flip = -1
 				#stock['signals_list_sell'].append((index, stock['sell_series'][-1]))
-		'''
+
 	return flip, reason
+'''	
 
 def algo_rsi_trigger(stock, index, algo_params):
 	flip = 0
@@ -313,47 +357,8 @@ def algo_rsi_trigger(stock, index, algo_params):
 	return flip, reason
 
 
-def algo_cci_trigger(stock, index, algo_params):
-	flip = 0
-	reason = ""
 
-	SMA_LONG = algo_params['sma_len']
-	buy  = float(stock['buy_series'][-1])
-	sell = float(stock['sell_series'][-1])
-
-	if(index > SMA_LONG):
-		if(not stock['active_position'] and not stock['no_buy']):
-			if((stock['cci_series'][-2] < algo_params['cci_down']) and (stock['cci_series'][-1] >= algo_params['cci_down']) and
-			    stock['rsi_series'][-1] > 50):
-				if(buy > stock['sma_series_long'][-1]):
-					reason = "cci_buy"
-					flip = 1
-
-		if(stock['active_position']):
-			if((stock['cci_series'][-2] > algo_params['cci_up']) and (stock['cci_series'][-1] <= algo_params['cci_up'])):
-				if(buy < float(stock['sma_series_long'][-1])):
-					reason = "cci_sell"
-					flip = -1
-
-		if(not stock['active_position'] and not stock['no_buy']):
-			if(stock['cci_series'][-1] < -algo_params['cci_big'] and stock['rsi_series'][-1] < algo_params['rsi_big']):
-					reason = "cci_big"
-					flip = 1
-
-		'''
-		if(stock['active_position']):
-			if(stock['cci_series'][-1] > algo_params['cci_big'] and stock['rsi_series'][-1] > (100 - algo_params['rsi_big'])):
-				reason = "cci_big"
-				flip = -1
-
-
-		if(stock['cci_series'][-2] < -algo_params['cci_big'] and stock['cci_series'][-1] > -algo_params['cci_big'] and
-			stock['rsi_series'][-1] < algo_params['rsi_big']):
-			reason = "cci_big"
-			flip = 1
-		'''
-	return flip, reason
-
+'''
 def algo_bb(stock, index, algo_params):
 	flip = 0
 	reason = ""
@@ -371,7 +376,7 @@ def algo_bb(stock, index, algo_params):
 			flip = -1
 
 	return flip, reason
-
+'''
 
 def algo_hard_stoploss(stock, index, algo_params):
 	flip = 0
@@ -417,7 +422,7 @@ def algo_reach_target(stock, index, algo_params):
 			flip = -1
 
 	return flip, reason
-
+'''
 def algo_higher_highs(stock, index, algo_params):
 	flip = 0
 	reason = ""
@@ -464,7 +469,7 @@ def algo_bias(stock, index, algo_params):
 	bias = 0
 
 	if(index > 0):
-		'''
+		
 		if(stock['buy_series'][-1] > stock['sma_series_short'][-1]):
 			bias += 1
 		else:
@@ -486,7 +491,7 @@ def algo_bias(stock, index, algo_params):
 			bias += 1
 		else:
 			bias -= 1
-		'''
+		
 		
 		if((stock['cci_series'][-2] < algo_params['cci_down']) and (stock['cci_series'][-1] >= algo_params['cci_down'])):
 			bias += 1
@@ -507,6 +512,7 @@ def algo_bias(stock, index, algo_params):
 			reason = "bias"
 
 	return flip, reason
+
 
 def algo_squeeze_trigger(stock, index, algo_params):
 	flip = 0
@@ -536,7 +542,7 @@ def algo_squeeze_trigger(stock, index, algo_params):
 	squeeze = stock['bb_lower'][-1] - stock['kc_lower'][-1]
 	stock['squeeze'].append(squeeze)
 	
-	'''
+	
 	if(index > 200):
 		if(stock['squeeze'][-2] > 0.2 and stock['squeeze'][-1] < 0.2):
 			flip = 1
@@ -544,7 +550,7 @@ def algo_squeeze_trigger(stock, index, algo_params):
 		elif(stock['squeeze'][-2] > 0.05 and stock['squeeze'][-1] < 0.05):
 			flip = -1
 			reason = "squeeze"
-	'''
+	
 	return flip, reason
 
 def algo_sto_macd_trigger(stock, index, algo_params):
@@ -561,7 +567,7 @@ def algo_sto_macd_trigger(stock, index, algo_params):
 		   stock['stochastic_k'][-1] > 80 and stock['stochastic_d'][-1] > 80):
 			flip = 1
 
-		'''
+	
 		if(stock['stochastic_k'][-2] > stock['stochastic_d'][-2] and
 		   stock['stochastic_k'][-1] < stock['stochastic_d'][-1]):
 			bias -= 1
@@ -582,7 +588,7 @@ def algo_sto_macd_trigger(stock, index, algo_params):
 		if(stock['stochastic_k'][-2] < 1 and
 		stock['stochastic_k'][-1] > 1):
 			bias += 1
-		'''
+	
 		# In the case of a bullish MACD, this will occur when the histogram value is above the equilibrium line,
 		# and also when the MACD line is of greater value than the nine-day EMA, also called the "MACD signal line."
 
@@ -601,7 +607,7 @@ def calc_hurst_exponent(stock, index, algo_params):
 	
 	stock['hurst_sma'].append(np.mean(stock['hurst'][-20:]))
 	return 0, ''
-
+'''
 
 def calc_sma(stock, index, algo_params):
 	SMA_SHORT = 40
@@ -657,13 +663,16 @@ def calc_cci(stock, index, algo_params):
 		stock['cci_series'].append((p_typ - p_sma) / p_std / 0.015)
 	else:
 		stock['cci_series'].append(0)
-
+'''
 def calc_peaks(stock, index, algo_params):
-	PEAK_WINDOW = 10
+	PEAK_WINDOW = 110
 	buy = stock['buy_series'][-1]
 	if(index > 200):
 		window = stock['buy_series'][-PEAK_WINDOW:-1]
 		max = np.max(window)
+		min = np.min(window)
+		stock['win_max'] = max
+		stock['win_min'] = min
 		if(buy > max):
 			stock['hh'].append(1)
 		else:
@@ -743,12 +752,13 @@ def calc_kc(stock, index, algo_params):
 	stock['kc_typ'].append(typical) 
 	stock['kc_upper'].append(typical + (mult * stock['tr'][-1]))
 	stock['kc_lower'].append(typical - (mult * stock['tr'][-1]))
-
+'''
+'''
 def calc_pivots(stock, index, algo_params):
 	length = PIVOT_WIN
 	
 	#if(index >= length):
-	'''
+
 	if(index % length == 0):
 		series_high  = np.max(stock['buy_series'][-length:])
 		series_low   = np.min(stock['buy_series'][-length:])
@@ -763,7 +773,7 @@ def calc_pivots(stock, index, algo_params):
 		stock['pivots'].append((r3,r2,r1,pp,s1,s2,s3))
 	else:
 		stock['pivots'].append((stock['pivots'][-1]))
-	'''
+
 	# sliding pivots 
 	series_high  = np.max(stock['buy_series'][-length:])
 	series_low   = np.min(stock['buy_series'][-length:])
@@ -780,6 +790,8 @@ def calc_pivots(stock, index, algo_params):
 	#else:
 	#	p = stock['buy_series'][-1]
 	#	stock['pivots'].append((p,p,p,p,p,p,p))
+'''
+
 
 def check_signals(stock, index, algo_params):
 	global algos
