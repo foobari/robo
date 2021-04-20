@@ -207,9 +207,9 @@ def count_stats(final, stocks, last_total, grand_total, closed_deals, algo_param
 			id = "T0"
 
 		print
-		print("       │ days   deals    magic   eur/d   deals/d    sharpe   profitability   profit_factor   │   cci_u     cci_d   target   hard  trailing   cci_w   sma_len   rsi_len   rsi_lim   cci_big   rsi_big")
-		print("───────┼─────────────────────────────────────────────────────────────────────────────────────┼──────────────────────────────────────────────────────────────────────────────────────────────────────")
-		print('{:<2s}     │{:>5d}{:>8d}{:>9.3f}{:>8.2f}{:>10.2f}{:>10.3f}{:>16.3f}{:>16.3f}   │{:>8.3f}{:>10.3f}{:>9.3f}{:>7.3f}{:>10.3f}{:>8d}{:>10d}{:>10d}{:>10.3f}{:>10.3f}{:>10.3f}'.format(
+		print("       | days   deals    magic   eur/d   deals/d    sharpe   profitability   profit_factor   |   cci_u     cci_d   target   hard  trailing   cci_w   sma_len   rsi_len   rsi_lim   cci_big   rsi_big")
+		print("-------|-------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------")
+		print('{:<2s}     |{:>5d}{:>8d}{:>9.3f}{:>8.2f}{:>10.2f}{:>10.3f}{:>16.3f}{:>16.3f}   |{:>8.3f}{:>10.3f}{:>9.3f}{:>7.3f}{:>10.3f}{:>8d}{:>10d}{:>10d}{:>10.3f}{:>10.3f}{:>10.3f}'.format(
 					id,
 					stats['days'],
 					len(g_closed_deals),
@@ -241,13 +241,13 @@ def count_stats(final, stocks, last_total, grand_total, closed_deals, algo_param
 			optimizer_result_best_algo = algo_params.copy()
 
 
-		indicator = 'best   │'
+		indicator = 'best   |'
 		current_best_value = optimizer_result_best_stat[optimizer_stat_to_optimize]
 		if(current_best_value > previous_best_value):
 			previous_best_value = current_best_value
-			indicator = 'best x │'
+			indicator = 'best x |'
 		
-		print('{:<0s}{:>5d}{:>8d}{:>9.3f}{:>8.2f}{:>10.2f}{:>10.3f}{:>16.3f}{:>16.3f}   │{:>8.3f}{:>10.3f}{:>9.3f}{:>7.3f}{:>10.3f}{:>8d}{:>10d}{:>10d}{:>10.3f}{:>10.3f}{:>10.3f}'.format(
+		print('{:<0s}{:>5d}{:>8d}{:>9.3f}{:>8.2f}{:>10.2f}{:>10.3f}{:>16.3f}{:>16.3f}   |{:>8.3f}{:>10.3f}{:>9.3f}{:>7.3f}{:>10.3f}{:>8d}{:>10d}{:>10d}{:>10.3f}{:>10.3f}{:>10.3f}'.format(
 					indicator,
 					optimizer_result_best_stat['days'],
 					optimizer_result_best_stat['deals'],
