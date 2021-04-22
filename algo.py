@@ -37,16 +37,16 @@ param_names = [ 'name',		#0
 		'rsi_big']	#11
 
 # optimizer window/step
-optimizer_window_percentage_min =   5
-optimizer_window_percentage_max =   5
-optimizer_window_steps_min      =   50
-optimizer_window_steps_max      =   50
+optimizer_window_percentage_min =   1
+optimizer_window_percentage_max =   1
+optimizer_window_steps_min      =  6
+optimizer_window_steps_max      =  6
 
 # parameter list to optimize
 #params_idx = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
-#params_idx = [1, 2, 3, 4, 5, 9, 10, 11]
-#params_idx = [8,9]
-params_idx = [1,2,3,4,5,7,9]
+#params_idx = [2, 3, 4, 5, 9, 10, 11]
+params_idx = [5,7]
+#params_idx = [2,3,4,5,7,9]
 
 def set_new_params(stocks):
 	global optimizer_params
@@ -136,27 +136,8 @@ def optimize_params(randomize_params_start_values = False):
 		optimizer_window =  int(random.uniform(optimizer_window_percentage_min,  optimizer_window_percentage_max))
 		optimizer_steps  =  int(random.uniform(optimizer_window_steps_min,       optimizer_window_steps_max))
 		#optimizer_window  = 50
-		#optimizer_steps   = 50
+		#optimizer_steps   = 5
 		print("Randomized window: +-", optimizer_window, "%, steps: ", optimizer_steps+1)
-
-	# If param optimizing run is done, change to optimal value, move to next
-	if(optimizer_runs == (optimizer_steps+1)):
-		param_name  = param_names[params_idx[optimizer_param]]
-		p[param_name] = optimizer_result_best_algo_params[param_name]
-		optimizer_runs = 0
-		optimizer_param += 1
-	
-
-	if(optimizer_param == len(params_idx)):
-		print("One optimizer bigrun done")
-		optimizer_runs  =  0
-		optimizer_param =  0
-		optimizer_bigruns += 1
-
-		# set the optimal set as a baseline
-		optimizer_params = optimizer_result_best_algo_params
-
-		return p
 
 	param_value = optimizer_params[param_names[params_idx[optimizer_param]]]
 
@@ -170,7 +151,50 @@ def optimize_params(randomize_params_start_values = False):
 		win_max  = param_value * (float(100 - optimizer_window)/100)
 		win_size = win_min - win_max
 		win_step = -win_size / optimizer_steps
+
+	temp_steps = optimizer_steps
+
+	if(param_names[params_idx[optimizer_param]] == 'cci_window' or
+	   param_names[params_idx[optimizer_param]] == 'sma_len'    or
+	   param_names[params_idx[optimizer_param]] == 'rsi_len'):
+		if(win_step <= 1):
+			win_step = 1
+			temp_steps = int(win_size)
+
+
+	# If param optimizing run is done, change to optimal value, move to next
+	if(optimizer_runs == (optimizer_steps+1) or
+	   optimizer_runs > temp_steps):
+		param_name  = param_names[params_idx[optimizer_param]]
+		p[param_name] = optimizer_result_best_algo_params[param_name]
+		optimizer_runs = 0
+		optimizer_param += 1
+
+
+	if(optimizer_param == len(params_idx)):
+		print("One optimizer bigrun done")
+		optimizer_runs  =  0
+		optimizer_param =  0
+		optimizer_bigruns += 1
+
+		# set the optimal set as a baseline
+		optimizer_params = optimizer_result_best_algo_params
+
+		return p
+
+	param_value = optimizer_params[param_names[params_idx[optimizer_param]]]
 	
+	if(param_value > 0):
+		win_min  = param_value * (float(100 - optimizer_window)/100)
+		win_max  = param_value * (1 + float(optimizer_window)/100)
+		win_size = win_max - win_min
+		win_step = win_size / optimizer_steps
+	else:
+		win_min  = param_value * (1 + float(optimizer_window)/100)
+		win_max  = param_value * (float(100 - optimizer_window)/100)
+		win_size = win_min - win_max
+		win_step = -win_size / optimizer_steps
+
 	random_offset = 0.25 * float(random.uniform(-win_step, win_step))
 
 	temp_steps = optimizer_steps
@@ -185,6 +209,7 @@ def optimize_params(randomize_params_start_values = False):
 		p[param_names[params_idx[optimizer_param]]] = int(win_min + (optimizer_runs * win_step))
 	else:
 		p[param_names[params_idx[optimizer_param]]] = round(float(win_min + random_offset + (optimizer_runs * win_step)), 4)
+
 
 	optimizer_runs += 1
 
@@ -246,9 +271,7 @@ def init():
 def get_algo_params():
 	# 	cci_up	    cci_down    target    hard   trailing    cci_w    sma_len    rsi_len    rsi_lim    cci_big    rsi_big
 	algo_params = (
-	#('dax',   999.999,  -140.598,    0.969, -0.780,    -0.677,      81,       104,       188,    28.650,   238.655,    39.745), # dax.65
-	#('doge',   179.884,  -254.743,    2.120, -2.202,    -3.156,      69,       183,       337,    44.780,   133.456,    39.693), # doge.50
-	('doge',   204.318,  -132.394,    2.595, -2.351,    -2.679,      68,       121,       178,    51.098,   133.456,    39.693), # dogetest
+	('doge',   000.000,  -132.394,    2.596, -2.351,    -2.679,      68,       121,       178,    51.098,   180.422,    39.693), # dogetest
 	('btc',    147.329,  -138.338,    5.587, -1.632,    -2.159,      69,       142,       180,    29.869,   314.882,    42.664), # btc.49
 	)
 	return algo_params
@@ -262,37 +285,19 @@ def algo_cci_trigger(stock, index, algo_params):
 	sell = float(stock['sell_series'][-1])
 
 	if(index > SMA_LONG):
+		
 		if(not stock['active_position'] and not stock['no_buy']):
 			if((stock['cci_series'][-2] < algo_params['cci_down']) and (stock['cci_series'][-1] >= algo_params['cci_down']) and
-			    #stock['rsi_series'][-1] > 50.888):
 			    stock['rsi_series'][-1] > algo_params['rsi_lim']):
 				if(buy > stock['sma_series_long'][-1]):
-					reason = "cci_buy"
+					reason = "cci"
 					flip = 1
-
-		if(stock['active_position']):
-			if((stock['cci_series'][-2] > algo_params['cci_up']) and (stock['cci_series'][-1] <= algo_params['cci_up'])):
-				if(buy < float(stock['sma_series_long'][-1])):
-					reason = "cci_sell"
-					flip = -1
-		# remove for now
-		#if(not stock['active_position'] and not stock['no_buy']):
-		#	if(stock['cci_series'][-1] < -algo_params['cci_big'] and stock['rsi_series'][-1] < algo_params['rsi_big']):
-		#			reason = "cci_big"
-		#			flip = 1
-
-		'''
-		if(stock['active_position']):
-			if(stock['cci_series'][-1] > algo_params['cci_big'] and stock['rsi_series'][-1] > (100 - algo_params['rsi_big'])):
-				reason = "cci_big"
-				flip = -1
-
-
+		
 		if(stock['cci_series'][-2] < -algo_params['cci_big'] and stock['cci_series'][-1] > -algo_params['cci_big'] and
 			stock['rsi_series'][-1] < algo_params['rsi_big']):
-			reason = "cci_big"
+			reason = "cci_rsi"
 			flip = 1
-		'''
+		
 	return flip, reason
 
 '''
@@ -334,7 +339,7 @@ def algo_pivots(stock, index, algo_params):
 				#stock['signals_list_sell'].append((index, stock['sell_series'][-1]))
 
 	return flip, reason
-'''	
+
 
 def algo_rsi_trigger(stock, index, algo_params):
 	flip = 0
@@ -348,17 +353,17 @@ def algo_rsi_trigger(stock, index, algo_params):
 					flip = 1
 					reason = 'rsi'
 		
-		'''
+		
 		# Makes slightly worse
 		if(stock['active_position'] and stock['rsi_series'][-2] > (100 - RSI_LIMIT) and stock['rsi_series'][-1] < (100 - RSI_LIMIT)):
 			flip = -1
 			reason = 'rsi'
-		'''
+		
 	return flip, reason
 
 
 
-'''
+
 def algo_bb(stock, index, algo_params):
 	flip = 0
 	reason = ""
