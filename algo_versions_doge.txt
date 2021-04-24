@@ -1,5 +1,32 @@
+DOGE v0.3.0 - Clean slate
+-----------
+change position to 100€
+change to count real days = 8640 ticks
+
+files  deals      magic   eur/d   deals/d    sharpe   profitability   profit_factor   |   cci_u     cci_d   target ftarget trailing   cci_w   sma_len   rsi_len   rsi_lim   cci_big   rsi_big
+──────────────────────────────────────────────────────────────────────────────────────┼──────────────────────────────────────────────────────────────────────────────────────────────────────
+   55     54    456.925    1.41      0.89     3.940           0.741           3.899   |   0.000  -132.394    2.602  0.097    -5.024      68       121       178    51.098   240.422    39.269
+
+
+
+
+trailing target
+
+days   deals    magic   eur/d   deals/d    sharpe   profitability   profit_factor   │ [cci_u]     cci_d   target ttrail  trailing   cci_w   sma_len   rsi_len   rsi_lim   cci_big   rsi_big
+────────────────────────────────────────────────────────────────────────────────────┼──────────────────────────────────────────────────────────────────────────────────────────────────────
+  55      55  307.037    0.98      1.00     4.114           0.764           4.054   |   0.000  -132.394    2.602  0.097    -5.024      68       121       178    51.098   240.422    39.269
+
+
+
 DOGE v0.2.0 - Clean slate
 -----------
+no hard
+
+days   deals    magic   eur/d   deals/d    sharpe   profitability   profit_factor   │ [cci_u]     cci_d   target   hard  trailing   cci_w   sma_len   rsi_len   rsi_lim   cci_big   rsi_big
+────────────────────────────────────────────────────────────────────────────────────┼──────────────────────────────────────────────────────────────────────────────────────────────────────
+  55      54  268.072    0.81      0.98     4.385           0.759           3.741   |   0.000  -132.394    2.602  0.000    -5.024      68       121       178    51.098   240.422    39.269
+  55      54  266.896    0.80      0.98     4.377           0.759           3.734   |   0.000  -132.394    2.596  0.000    -5.024      68       121       178    51.098   240.422    39.269
+
 
 cci + cci_rsi
 

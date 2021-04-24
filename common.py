@@ -34,6 +34,7 @@ stats = {}
 stats['magic'] = 0
 stats['sharpe'] = 0
 stats['days'] = 0
+stats['ticks'] = 0
 stats['profitability'] = 0
 stats['profit_factor'] = 0
 stats['result_eur'] = 0
@@ -51,7 +52,7 @@ param_names = [ 'name',
 	        'cci_up',
 		'cci_down',
 		'target',
-		'hard',
+		'ttrail',
 		'trailing',
 		'cci_window',
 		'sma_len',
@@ -112,8 +113,6 @@ def init_stocks(options):
 		stock['flip'] = 0
 		stock['no_buy'] = False
 		stock['trailing_stop_loss'] = 0
-		if(stock['transaction_type'] != "sell_away"):
-			stock['hard_stop_loss'] = 0
 
 	return stocks
 
@@ -129,7 +128,6 @@ def calc_stats(closed_deals):
 	all_buys  = 0
 	all_sells = 0
 	
-	#if(len(closed_deals) > 0 and stats['days'] > 0):
 	if(len(closed_deals) > 0):
 		for deal in closed_deals:
 			buy, sell, res = get_deal_result(deal)
@@ -158,7 +156,7 @@ def calc_stats(closed_deals):
 		stats['result_eur'] =  all_sells - all_buys
 		stats['result_per'] = (all_sells - all_buys) / all_buys
 		stats['deals'] = len(closed_deals)
-		stats['magic'] = 100 * stats['result_eur'] * stats['profitability'] * stats['sharpe'] / stats['days']
+		stats['magic'] = 100 * stats['result_eur'] * stats['profitability'] * stats['sharpe'] / optimizer_result_best_stat['ticks']*8640
 		if(stats['magic'] > 0 and stats['result_eur'] < 0):
 			stats['magic'] *= -1
 	else:
@@ -179,7 +177,7 @@ def get_current_best_optimizer_vars():
 
 	return optimizer_result_best_algo
 
-def count_stats(final, stocks, last_total, grand_total, closed_deals, algo_params):
+def count_stats(final, stocks, last_total, grand_total, closed_deals, algo_params, entries):
 	global g_closed_deals
 	global stats
 	global param_names
@@ -188,7 +186,8 @@ def count_stats(final, stocks, last_total, grand_total, closed_deals, algo_param
 	global optimizer_result_best_algo
 	global optimizer_results_vs_runs
 
-	stats['days'] = stats['days'] + 1
+	stats['days']  = stats['days'] + 1
+	stats['ticks'] = stats['ticks'] + entries
 	g_closed_deals.extend(closed_deals)
 
 	stats = calc_stats(closed_deals)
@@ -207,16 +206,16 @@ def count_stats(final, stocks, last_total, grand_total, closed_deals, algo_param
 			id = "T0"
 
 		print
-		print("       | days   deals    magic   eur/d   deals/d    sharpe   profitability   profit_factor   |   cci_u     cci_d   target   hard  trailing   cci_w   sma_len   rsi_len   rsi_lim   cci_big   rsi_big")
-		print("-------|-------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------")
-		print('{:<2s}     |{:>5d}{:>8d}{:>9.3f}{:>8.2f}{:>10.2f}{:>10.3f}{:>16.3f}{:>16.3f}   |{:>8.3f}{:>10.3f}{:>9.3f}{:>7.3f}{:>10.3f}{:>8d}{:>10d}{:>10d}{:>10.3f}{:>10.3f}{:>10.3f}'.format(
+		print("       | files  deals      magic   eur/d   deals/d    sharpe   profitability   profit_factor   |   cci_u     cci_d   target ftarget trailing   cci_w   sma_len   rsi_len   rsi_lim   cci_big   rsi_big")
+		print("-------|---------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------")
+		print('{:<2s}     |{:>6d}{:>7d}{:>11.3f}{:>8.2f}{:>10.2f}{:>10.3f}{:>16.3f}{:>16.3f}   |{:>8.3f}{:>10.3f}{:>9.3f}{:>7.3f}{:>10.3f}{:>8d}{:>10d}{:>10d}{:>10.3f}{:>10.3f}{:>10.3f}'.format(
 					id,
 					stats['days'],
 					len(g_closed_deals),
 					#stats['result_per'],
 					stats['magic'],
-					stats['result_eur']/stats['days'],
-					float(stats['deals'])/float(stats['days']),
+					stats['result_eur']/stats['ticks']*8640,
+					float(stats['deals'])/float(stats['ticks'])*8640,
 					stats['sharpe'],
 					stats['profitability'],
 					stats['profit_factor'],
@@ -247,14 +246,14 @@ def count_stats(final, stocks, last_total, grand_total, closed_deals, algo_param
 			previous_best_value = current_best_value
 			indicator = 'best x |'
 		
-		print('{:<0s}{:>5d}{:>8d}{:>9.3f}{:>8.2f}{:>10.2f}{:>10.3f}{:>16.3f}{:>16.3f}   |{:>8.3f}{:>10.3f}{:>9.3f}{:>7.3f}{:>10.3f}{:>8d}{:>10d}{:>10d}{:>10.3f}{:>10.3f}{:>10.3f}'.format(
+		print('{:<0s}{:>6d}{:>7d}{:>11.3f}{:>8.2f}{:>10.2f}{:>10.3f}{:>16.3f}{:>16.3f}   |{:>8.3f}{:>10.3f}{:>9.3f}{:>7.3f}{:>10.3f}{:>8d}{:>10d}{:>10d}{:>10.3f}{:>10.3f}{:>10.3f}'.format(
 					indicator,
 					optimizer_result_best_stat['days'],
 					optimizer_result_best_stat['deals'],
 					#optimizer_result_best_stat['result_per'],
 					optimizer_result_best_stat['magic'],
-					optimizer_result_best_stat['result_eur']/optimizer_result_best_stat['days'],
-					float(optimizer_result_best_stat['deals'])/float(optimizer_result_best_stat['days']),
+					optimizer_result_best_stat['result_eur']/optimizer_result_best_stat['ticks']*8640,
+					float(optimizer_result_best_stat['deals'])/float(optimizer_result_best_stat['ticks'])*8640,
 					optimizer_result_best_stat['sharpe'],
 					optimizer_result_best_stat['profitability'],
 					optimizer_result_best_stat['profit_factor'],
@@ -274,6 +273,7 @@ def count_stats(final, stocks, last_total, grand_total, closed_deals, algo_param
 		del g_closed_deals[:]
 		first_time = True
 		stats['days'] = 0
+		stats['ticks'] = 0
 
 	return grand_total
 
@@ -291,19 +291,6 @@ def post_to_toilet(time, action, name, amount, price):
 		resp = requests.post(url, json=data)
 		print(resp)
 
-def print_decision_vars(stock):
-	if(False):
-		len = 5
-		print("current_top", stock['current_top'])
-		print("sell_series", stock['sell_series'][-len:])
-		print("sma_series_short", stock['sma_series_short'][-len:])
-		print("sma_series_long", stock['sma_series_long'][-len:])
-		print("cci_series", stock['cci_series'][-len:])
-		print("rsi_series", stock['rsi_series'][-len:])
-		print("cci_ptyp", stock['cci_ptyp'][-len:])
-		print("bb_upper", stock['bb_upper'][-len:])
-		print("bb_lower", stock['bb_lower'][-len:])
-
 def do_transaction(stock, flip, reason, money, last_total, closed_deals, algo_params, index, options):
 	buy  = float(stock['buy_series'][-1])
 	sell = float(stock['sell_series'][-1])
@@ -313,7 +300,6 @@ def do_transaction(stock, flip, reason, money, last_total, closed_deals, algo_pa
 		stock['active_position'] = True
 		stock['current_top']        = buy
 		stock['last_buy']           = sell
-		stock['hard_stop_loss']	    = ((1 + algo_params['hard'] * stock['leverage'] / 100) * sell)
 		stock['target']             = ((1 + algo_params['target'] * stock['leverage'] / 100) * sell)
 		stock['trailing_stop_loss'] = ((1 + algo_params['trailing'] * stock['leverage'] / 100) * sell)
 
@@ -327,8 +313,6 @@ def do_transaction(stock, flip, reason, money, last_total, closed_deals, algo_pa
 
 		if(options['do_actions']):
 			print(datetime.now().strftime("%H:%M:%S"), "ACTION: BUY ", stock['name'], stock['transaction_size'], stock['last_buy'], reason)
-
-		print_decision_vars(stock)
 
 		post_to_toilet(datetime.now().strftime("%H:%M:%S"), "BUY", stock['name'], stock['transaction_size'], stock['last_buy'])
 
@@ -351,8 +335,6 @@ def do_transaction(stock, flip, reason, money, last_total, closed_deals, algo_pa
 			print(datetime.now().strftime("%H:%M:%S"), "ACTION: SELL", stock['name'], stock['transaction_size'], buy, '{:.1%}'.format(result_per), round(result_eur, 2), reason, "total", round(last_total, 2))
 
 		post_to_toilet(datetime.now().strftime("%H:%M:%S"), "SELL", stock['name'], stock['transaction_size'], buy)
-
-		print_decision_vars(stock)
 
 		if(not options['dry_run']):
 			online.execute_sell_order_online(stock)

@@ -178,7 +178,7 @@ while(True):
 		index = index + 1
 
 	last_run = fileindex == len(filenames)
-	best_total = common.count_stats(last_run, stocks, last_total, best_total, closed_deals, algo_params)
+	best_total = common.count_stats(last_run, stocks, last_total, best_total, closed_deals, algo_params, entries)
 
 	if(last_run and s['one_shot']):
 		print("Pausing...")

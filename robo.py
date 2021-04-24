@@ -60,7 +60,6 @@ for stock in stocks:
 	if(stock['transaction_type'] == 'sell_away'):
 		print("target", stock['target'])
 		print("last_buy", stock['last_buy'])
-		print("hard_stop_loss", stock['hard_stop_loss'])
 
 	online.login(stock, creds)
 

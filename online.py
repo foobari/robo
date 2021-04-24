@@ -32,12 +32,11 @@ def execute_buy_order_online(stock):
 			print("setting:")
 			stock['last_buy'] = share_price
 			algo_params = algo.get_params()
-			stock['hard_stop_loss']	    = ((1 + algo_params['hard'] * stock['leverage'] / 100) * share_price)
 			stock['target']             = ((1 + algo_params['target'] * stock['leverage'] / 100) * share_price)
 			stock['trailing_stop_loss'] = ((1 + algo_params['trailing'] * stock['leverage'] / 100) * share_price)
 			print("buy price to", share_price)
 			print("target", stock['target'])
-			print("stoploss", stock['hard_stop_loss'])
+			print("stoploss", stock['trailing_stop_loss'])
 		else:
 			print("not supported", stock['name'])
 
