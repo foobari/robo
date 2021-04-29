@@ -7,7 +7,7 @@
 		"leverage": 1,
 		"spread": 1,
 		"transaction_size": 0.00001,
-		"transaction_money": 60,
+		"transaction_money": 100,
 		"buy_full_money": true,
 		"account": "2",
 		"transaction_type": "auto",

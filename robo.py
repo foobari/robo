@@ -2,10 +2,8 @@ from lxml import html
 import requests
 import time
 import sys
-import pandas as pd
 import matplotlib.pyplot as plt
 import matplotlib.ticker as ticker
-import pandas_datareader as web
 import numpy as np
 import math
 import os,glob
@@ -13,11 +11,6 @@ import json
 from datetime import datetime
 
 import pdb
-from selenium import webdriver
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
-from selenium.webdriver.support.ui import Select
 
 import algo
 import graph
@@ -52,7 +45,7 @@ if(options['do_graph']):
 
 # here we go, login
 for stock in stocks:
-	print datetime.now().strftime("Start %H:%M:%S:"), stock['name'], stock['transaction_type']
+	print(datetime.now().strftime("Start %H:%M:%S:"), stock['name'], stock['transaction_type'])
 	if(stock['buy_full_money'] == True):
 		print("transaction_money", stock['transaction_money'])
 	else:
@@ -155,7 +148,7 @@ while(not is_last):
 #############################################
 # and exit
 #
-common.count_stats(True, stocks, last_total, best_total, closed_deals, algo_params)
+common.count_stats(True, stocks, last_total, best_total, closed_deals, algo_params, entries)
 for stock in stocks:
 	online.logout(stock)
 

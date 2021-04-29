@@ -33,6 +33,7 @@ g_closed_deals = []
 stats = {}
 stats['magic'] = 0
 stats['sharpe'] = 0
+stats['files'] = 0
 stats['days'] = 0
 stats['ticks'] = 0
 stats['profitability'] = 0
@@ -49,10 +50,10 @@ options['dry_run']     = False
 options['do_optimize'] = False
 
 param_names = [ 'name',
-	        'cci_up',
+	        'cci_lim',
 		'cci_down',
 		'target',
-		'ttrail',
+		'ftarget',
 		'trailing',
 		'cci_window',
 		'sma_len',
@@ -93,7 +94,7 @@ def init_stocks(options):
 		stock['macd_histogram'] = []
 		stock['stochastic_d'] = []
 		stock['stochastic_k'] = []
-		stock['test'] = []
+		stock['test'] = 0
 		stock['test_sma'] = []
 		stock['pivots'] = []
 		stock['bb_upper'] = []
@@ -111,6 +112,7 @@ def init_stocks(options):
 		stock['browser'] = 0
 		stock['reason'] = ''
 		stock['flip'] = 0
+		stock['tweak'] = []
 		stock['no_buy'] = False
 		stock['trailing_stop_loss'] = 0
 
@@ -140,7 +142,7 @@ def calc_stats(closed_deals):
 		else:
 			stats['sharpe'] = 0
 
-		profits = [i for i in results if i >= 0]
+		profits = [i for i in results if i > 0]
 		losses  = [i for i in results if i < 0]
 		profits_sum = (sum(profits))
 		losses_sum = -(sum(losses))
@@ -156,7 +158,7 @@ def calc_stats(closed_deals):
 		stats['result_eur'] =  all_sells - all_buys
 		stats['result_per'] = (all_sells - all_buys) / all_buys
 		stats['deals'] = len(closed_deals)
-		stats['magic'] = 100 * stats['result_eur'] * stats['profitability'] * stats['sharpe'] / optimizer_result_best_stat['ticks']*8640
+		stats['magic'] = 10 * stats['profitability'] * stats['sharpe'] * (stats['result_eur'] / stats['days']) * (stats['deals'] /  stats['days'])
 		if(stats['magic'] > 0 and stats['result_eur'] < 0):
 			stats['magic'] *= -1
 	else:
@@ -186,36 +188,42 @@ def count_stats(final, stocks, last_total, grand_total, closed_deals, algo_param
 	global optimizer_result_best_algo
 	global optimizer_results_vs_runs
 
-	stats['days']  = stats['days'] + 1
+	stats['files']  = stats['files'] + 1
 	stats['ticks'] = stats['ticks'] + entries
+	stats['days'] = stats['ticks'] / 8640
 	g_closed_deals.extend(closed_deals)
 
 	stats = calc_stats(closed_deals)
 
-	print('{:.2%}'.format(stats['result_per']), round(stats['all_buys'], 2), round(stats['all_sells'], 2), round(stats['result_eur'], 2), len(closed_deals), round(stats['sharpe'], 2), round(stats['profitability'], 2), round(stats['profit_factor'], 2))
+	roi = stats['result_eur'] / 100
+	
+	print('roi: {:>6.2%}'.format(roi), ' profit: {:>6.2%}'.format(stats['result_per']), ' buys: {:>6.2f}'.format(round(stats['all_buys'], 2)),
+	      ' sells: {:>6.2f}'.format(round(stats['all_sells'], 2)), ' tot: {:>5.2f}'.format(round(stats['result_eur'], 2)),
+	      ' deals: {:>1d}'.format(len(closed_deals)), ' sharpe: {:>6.2f}'.format(round(stats['sharpe'], 2)),
+	      ' prftbly: {:>6.2f}'.format(round(stats['profitability'], 2)), ' prf_fac: {:>6.2f}'.format(round(stats['profit_factor'], 2)))
 
 	if(final):
 		stats = calc_stats(g_closed_deals)
-		if((stats['sharpe']   >= 2.8) and ((len(g_closed_deals) / stats['days']) >= 0.75) and stats['result_per'] >= 0.032):
+		if((stats['sharpe']   >= 2.8) and ((len(g_closed_deals) / stats['files']) >= 0.75) and stats['result_per'] >= 0.032):
 			id = "T3"
-		elif((stats['sharpe']   >= 2.0) and ((len(g_closed_deals) / stats['days']) >= 0.75) and stats['result_per'] >= 0.02):
+		elif((stats['sharpe']   >= 2.0) and ((len(g_closed_deals) / stats['files']) >= 0.75) and stats['result_per'] >= 0.02):
 			id = "T2"
-		elif((stats['sharpe'] >= 1.0) and ((len(g_closed_deals) / stats['days']) >= 0.75)):
+		elif((stats['sharpe'] >= 1.0) and ((len(g_closed_deals) / stats['files']) >= 0.75)):
 			id = "T1"
 		else:
 			id = "T0"
 
-		print
-		print("       | files  deals      magic   eur/d   deals/d    sharpe   profitability   profit_factor   |   cci_u     cci_d   target ftarget trailing   cci_w   sma_len   rsi_len   rsi_lim   cci_big   rsi_big")
-		print("-------|---------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------")
-		print('{:<2s}     |{:>6d}{:>7d}{:>11.3f}{:>8.2f}{:>10.2f}{:>10.3f}{:>16.3f}{:>16.3f}   |{:>8.3f}{:>10.3f}{:>9.3f}{:>7.3f}{:>10.3f}{:>8d}{:>10d}{:>10d}{:>10.3f}{:>10.3f}{:>10.3f}'.format(
+		print()
+		print("       |  days  files  deals    magic   eur/d   deals/d    sharpe   prftbly   prof_fac   |  cci_lim     cci_d   target ftarget trailing   cci_w   sma_len   rsi_len   rsi_lim   cci_big   rsi_big")
+		print("-------|---------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------")
+		print('{:<2s}     |{:>6.1f}{:>7d}{:>7d}{:>9.1f}{:>8.2f}{:>10.2f}{:>10.3f}{:>10.3f}{:>11.3f}   |{:>9.3f}{:>10.3f}{:>9.3f}{:>8.3f}{:>9.3f}{:>8d}{:>10d}{:>10d}{:>10.3f}{:>10.3f}{:>10.3f}'.format(
 					id,
 					stats['days'],
+					stats['files'],
 					len(g_closed_deals),
-					#stats['result_per'],
 					stats['magic'],
-					stats['result_eur']/stats['ticks']*8640,
-					float(stats['deals'])/float(stats['ticks'])*8640,
+					float(stats['result_eur']/stats['days']),
+					float(stats['deals']/stats['days']),
 					stats['sharpe'],
 					stats['profitability'],
 					stats['profit_factor'],
@@ -246,14 +254,15 @@ def count_stats(final, stocks, last_total, grand_total, closed_deals, algo_param
 			previous_best_value = current_best_value
 			indicator = 'best x |'
 		
-		print('{:<0s}{:>6d}{:>7d}{:>11.3f}{:>8.2f}{:>10.2f}{:>10.3f}{:>16.3f}{:>16.3f}   |{:>8.3f}{:>10.3f}{:>9.3f}{:>7.3f}{:>10.3f}{:>8d}{:>10d}{:>10d}{:>10.3f}{:>10.3f}{:>10.3f}'.format(
+		print('{:<0s}{:>6.1f}{:>7d}{:>7d}{:>9.1f}{:>8.2f}{:>10.2f}{:>10.3f}{:>10.3f}{:>11.3f}   |{:>9.3f}{:>10.3f}{:>9.3f}{:>8.3f}{:>9.3f}{:>8d}{:>10d}{:>10d}{:>10.3f}{:>10.3f}{:>10.3f}'.format(
 					indicator,
-					optimizer_result_best_stat['days'],
+					stats['days'],
+					optimizer_result_best_stat['files'],
 					optimizer_result_best_stat['deals'],
 					#optimizer_result_best_stat['result_per'],
 					optimizer_result_best_stat['magic'],
-					optimizer_result_best_stat['result_eur']/optimizer_result_best_stat['ticks']*8640,
-					float(optimizer_result_best_stat['deals'])/float(optimizer_result_best_stat['ticks'])*8640,
+					optimizer_result_best_stat['result_eur']/stats['days'],
+					float(optimizer_result_best_stat['deals'])/stats['days'],
 					optimizer_result_best_stat['sharpe'],
 					optimizer_result_best_stat['profitability'],
 					optimizer_result_best_stat['profit_factor'],
@@ -272,6 +281,7 @@ def count_stats(final, stocks, last_total, grand_total, closed_deals, algo_param
 
 		del g_closed_deals[:]
 		first_time = True
+		stats['files'] = 0
 		stats['days'] = 0
 		stats['ticks'] = 0
 
@@ -332,7 +342,9 @@ def do_transaction(stock, flip, reason, money, last_total, closed_deals, algo_pa
 		result_eur = stock['stocks']*(buy - stock['last_buy'])
 		result_per = (buy - stock['last_buy']) / stock['last_buy']
 		if(options['do_actions']):
-			print(datetime.now().strftime("%H:%M:%S"), "ACTION: SELL", stock['name'], stock['transaction_size'], buy, '{:.1%}'.format(result_per), round(result_eur, 2), reason, "total", round(last_total, 2))
+			print(datetime.now().strftime("%H:%M:%S"), "ACTION: SELL", stock['name'], stock['transaction_size'], buy, '{:.1%}'.format(result_per),
+			      round(result_eur, 2), reason, "total", round(last_total, 2), stock['test'])
+		stock['test'] = 0
 
 		post_to_toilet(datetime.now().strftime("%H:%M:%S"), "SELL", stock['name'], stock['transaction_size'], buy)
 

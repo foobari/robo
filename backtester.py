@@ -58,7 +58,7 @@ def get_backtest_data(file):
 		fp.close()
 
 	entries = len(backtest_data)
-	print('file {:<1d}/{:<2d} {:s} ({:d})'.format(fileindex, filecount - 1, file, entries))
+	print('{:s} ({:d}) {:<1d}/{:<2d} '.format(os.path.basename(file), entries, fileindex, filecount - 1))
 	return backtest_data, entries
 
 	

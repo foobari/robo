@@ -34,7 +34,7 @@ def execute_buy_order_online(stock):
 			algo_params = algo.get_params()
 			stock['target']             = ((1 + algo_params['target'] * stock['leverage'] / 100) * share_price)
 			stock['trailing_stop_loss'] = ((1 + algo_params['trailing'] * stock['leverage'] / 100) * share_price)
-			print("buy price to", share_price)
+			print("buy price", share_price)
 			print("target", stock['target'])
 			print("stoploss", stock['trailing_stop_loss'])
 		else:
@@ -81,6 +81,10 @@ def execute_sell_order_online(stock):
 			amount = stock['transaction_size']
 			order = binance_client.order_market_sell(symbol = 'DOGEUSDT', quantity = amount)
 			print(order)
+			lot_price = float(order['cummulativeQuoteQty'])
+			share_price = lot_price / amount
+			print("setting:")
+			print("sell price", share_price)
 			print("------------------------")
 		else:
 			print("not supported", stock['name'])

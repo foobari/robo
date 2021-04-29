@@ -25,10 +25,10 @@ trailing_tweak = 0
 p = {}
 
 param_names = [ 'name',		#0
-	        'cci_up',	#1
+	        'cci_lim',	#1
 		'cci_down',	#2
 		'target',	#3
-		'ttrail',	#4
+		'ftarget',	#4
 		'trailing',	#5
 		'cci_window',	#6
 		'sma_len',	#7
@@ -38,16 +38,25 @@ param_names = [ 'name',		#0
 		'rsi_big']	#11
 
 # optimizer window/step
-optimizer_window_percentage_min =  90
-optimizer_window_percentage_max =  90
-optimizer_window_steps_min      =  50
-optimizer_window_steps_max      =  50
+optimizer_window_percentage_min =   1
+optimizer_window_percentage_max =  10
+optimizer_window_steps_min      =   5 
+optimizer_window_steps_max      =  25
 
 # parameter list to optimize
-#params_idx = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
-#params_idx = [2, 3, 4, 5, 9, 10, 11]
-params_idx = [4]
-#params_idx = [2,3,4,5,7,9]
+#params_idx = [1, 2, 6, 7, 8, 9]
+params_idx = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
+#params_idx = [4]
+#params_idx = [4,5]
+
+def get_algo_params():
+	#          cci_lim   cci_down    target  ftarget  trailing    cci_w    sma_len    rsi_len    rsi_lim    cci_big    rsi_big
+	algo_params = (
+	('doge',  -157.392,  -132.262,    2.550,   0.072,   -6.427,      68,       142,       127,    50.996,  -217.139,    39.779), # doge active
+	('btc',   -162.755,  -132.394,    2.530,   0.095,   -5.024,      68,       121,       178,    51.098,  -240.422,    39.269), 
+	)
+	return algo_params
+
 
 def set_new_params(stocks):
 	global optimizer_params
@@ -67,10 +76,10 @@ def set_new_params(stocks):
 		quit()
 
 	p['name'] 	= bp[index][0]
-	p['cci_up'] 	= bp[index][1]
+	p['cci_lim'] 	= bp[index][1]
 	p['cci_down'] 	= bp[index][2]
 	p['target']	= bp[index][3]
-	p['ttrail'] 	= bp[index][4]
+	p['ftarget'] 	= bp[index][4]
 	p['trailing'] 	= bp[index][5]
 	p['cci_window']	= bp[index][6]
 	p['sma_len']	= bp[index][7]
@@ -89,10 +98,10 @@ def randomize_params():
 	global optimizer_params
 	global p
 
-	p['cci_up'] 	=  random.uniform(130,  230)
+	p['cci_lim'] 	=  random.uniform(-130,  -230)
 	p['cci_down'] 	= -random.uniform(70,  170)
 	p['target']	=  random.uniform(1, 3)
-	p['ttrail'] 	= -random.uniform(1, 3)
+	p['ftarget'] 	= -random.uniform(1, 3)
 	p['trailing'] 	= -random.uniform(1, 3)
 	p['cci_window']	=  int(random.uniform(50, 100))
 	p['sma_len']	=  int(random.uniform(100, 200))
@@ -214,7 +223,7 @@ def optimize_params(randomize_params_start_values = False):
 
 	optimizer_runs += 1
 
-	xs = ' ' * 100 + ' ' * 9 * (params_idx[optimizer_param] - 1) + '^'
+	xs = (' ' * 98) + (' ' * 9 * (params_idx[optimizer_param] - 1)) + '^'
 	print(xs)
 
 	b_spaces = '-' * (optimizer_runs - 1)
@@ -264,14 +273,6 @@ def print_decision_vars(stock):
 		print("cci_series", stock['cci_series'][-len:])
 		print("rsi_series", stock['rsi_series'][-len:])
 
-# winner scan: cat testrun_dax1 | grep days -A6
-def get_algo_params():
-	#          cci_up    cci_down    target  ftarget  trailing    cci_w    sma_len    rsi_len    rsi_lim    cci_big    rsi_big
-	algo_params = (
-	('doge',   000.000,  -132.394,    2.602,  0.232,    -5.024,      68,       121,       178,    51.098,   240.422,    39.269), # dogetest
-	('btc',    147.329,  -138.338,    5.587, -1.632,    -2.159,      69,       142,       180,    29.869,   314.882,    42.664), # btc.49
-	)
-	return algo_params
 
 def algo_cci_trigger(stock, index, algo_params):
 	flip = 0
@@ -284,17 +285,22 @@ def algo_cci_trigger(stock, index, algo_params):
 	if(index > SMA_LONG):
 		
 		if(not stock['active_position'] and not stock['no_buy']):
-			if((stock['cci_series'][-2] < algo_params['cci_down']) and (stock['cci_series'][-1] >= algo_params['cci_down']) and
-			    stock['rsi_series'][-1] > algo_params['rsi_lim']):
-				if(buy > stock['sma_series_long'][-1]):
-					reason = "cci"
-					flip = 1
+			if((stock['cci_series'][-2] < algo_params['cci_down']) and (stock['cci_series'][-1] >= algo_params['cci_down'])):
+				if(stock['rsi_series'][-1] > algo_params['rsi_lim']):
+					if(buy > stock['sma_series_long'][-1]):
+						if(stock['cci_series'][-2] > algo_params['cci_lim']):
+							reason = "cci"
+							flip = 1
+
 		
-		if(stock['cci_series'][-2] < -algo_params['cci_big'] and stock['cci_series'][-1] > -algo_params['cci_big'] and
+		if(stock['cci_series'][-2] < algo_params['cci_big'] and stock['cci_series'][-1] > algo_params['cci_big'] and
 			stock['rsi_series'][-1] < algo_params['rsi_big']):
-			reason = "cci_rsi"
-			flip = 1
-		
+				if(np.min(stock['rsi_series'][-50:]) < 1):
+					print("fail rsi fix")
+				else:
+					#print_decision_vars(stock)
+					reason = "cci_rsi"
+					flip = 1
 	return flip, reason
 
 
@@ -319,6 +325,7 @@ def algo_trailing_stoploss(stock, index, algo_params):
 		if(buy >= stock['current_top']):
 			stock['current_top'] = buy
 			stock['trailing_stop_loss'] = target_price
+			#print("top", stock['current_top'], ", trailing", stock['trailing_stop_loss'])
 		if(sell <= stock['trailing_stop_loss']):
 			flip = -1
 
@@ -328,24 +335,26 @@ def algo_trailing_stoploss(stock, index, algo_params):
 def algo_reach_target(stock, index, algo_params):
 	global trailing_tweak
 
+	D_FLEX_TRAILING = 0.174
+	SMA_SPEED_CUTOFF_PERCENT = 0.050
+
 	flip = 0
 	reason = ""
 	buy  = float(stock['buy_series'][-1])
-	
+
 	if(stock['active_position']):
 		if(buy >= stock['target']):
-			#print("target reached", buy, stock['target'])
-			stock['target'] = stock['target'] * 10
-			#print("new target", stock['target'])
-			trailing_tweak = algo_params['trailing'] * algo_params['ttrail']
-			#print("new trailing stop_loss", trailing_tweak)
-			#trailing = algo_params['trailing']
-			#target_price = ((1 + float(trailing) * stock['leverage'] / 100) * stock['current_top'])
-
-
-			#reason = "target"
-			#flip = -1
-
+			if(stock['test'] == 0):
+				#print_decision_vars(stock)
+				sma_speed = 100 * (stock['sma_series_short'][-1] / stock['sma_series_short'][-2] - 1)
+				if(sma_speed > SMA_SPEED_CUTOFF_PERCENT):
+					tweak = D_FLEX_TRAILING
+				else:
+					tweak = algo_params['ftarget']
+				trailing_tweak = algo_params['trailing'] * tweak
+				stock['test'] = tweak
+				print(">target, trailing", trailing_tweak)
+				
 	return flip, reason
 
 def calc_sma(stock, index, algo_params):

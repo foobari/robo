@@ -1,5 +1,5 @@
 {
-	"graph_update_interval": 200,
+	"graph_update_interval": 100,
 	"randomize": false,
 	"optimize": true,
 	"one_shot": false,
