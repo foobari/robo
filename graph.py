@@ -7,6 +7,7 @@ import math
 import os,glob
 import pdb
 
+
 import algo
 
 fig = plt.figure(figsize=(12,12))
@@ -48,7 +49,7 @@ def draw_stocks(stock):
 	#ax.axhline(y = stock['pivots'][-1][1], color='green', linestyle='--')
 	#ax.axhline(y = stock['pivots'][-1][2], color='green', linestyle='--')
 	
-	ax.plot(stock['pivots'])
+	#ax.plot(stock['pivots'])
 	#ax.plot(stock['pp_s1'])
 	#ax.plot(stock['pp_r1'])
 
@@ -109,7 +110,7 @@ def draw(stocks):
 		if(stock['type'] == 'long'):
 			cci_lng  = stock['cci_series']
 			rsi_lng  = stock['rsi_series']
-			test1 = stock['tweak']
+			#test1 = stock['tweak']
 			#test2 = stock['pp_r1']
 			#test3 = stock['pp_s1']
 
@@ -117,11 +118,12 @@ def draw(stocks):
 			cci_shrt = stock['cci_series']
 			rsi_shrt = stock['rsi_series']
 
-	draw_test(test1)
+	#draw_test(test1)
 	draw_cci(cci_lng, cci_shrt)
 	draw_rsi(rsi_lng, rsi_shrt)
 	plt.draw()
 	plt.pause(0.0001)
+
 
 def init():
 	plt.ion()

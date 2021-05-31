@@ -31,11 +31,6 @@ sett 	= settings.init('settings_robo.json')
 
 algo_params = algo.set_new_params(stocks)
 
-if(stocks[0]['url'] != 'binance_api'):
-	while(datetime.now() < datetime.now().replace(hour = 9, minute = 15)):
-		print(datetime.now().strftime("%H:%M:%S"), "waiting for Nordnet to open...")
-		time.sleep(10)
-
 with open('credentials.json', 'r') as f:
 	creds = json.load(f)
 
@@ -45,7 +40,7 @@ if(options['do_graph']):
 
 # here we go, login
 for stock in stocks:
-	print(datetime.now().strftime("Start %H:%M:%S:"), stock['name'], stock['transaction_type'])
+	print(datetime.now().strftime("start %H:%M:%S:"), stock['name'], stock['transaction_type'])
 	if(stock['buy_full_money'] == True):
 		print("transaction_money", stock['transaction_money'])
 	else:
@@ -54,6 +49,7 @@ for stock in stocks:
 		print("target", stock['target'])
 		print("last_buy", stock['last_buy'])
 
+	print("priming...")
 	online.login(stock, creds)
 
 # run for one day max in live trading
@@ -66,25 +62,15 @@ while(not is_last):
 		print(datetime.now().strftime("%H:%M:%S Error fetching data"))
 		time.sleep(sett['wait_fetching_secs'])
 		continue
-	
+
 	# store to file
 	common.store_stock_values(stocks, index, options)
 
 	# check signals, do transactions
 	flip = 0
 	for stock in stocks:
-		if(stock['url'] != 'binance_api'):
-			if(datetime.now() > datetime.now().replace(hour = 20, minute = 50)):
-				print("Day end, closing open positions and exit")
-				is_last = True
-				flip = -1
-				reason = 'day_close'
-			else:
-				stock['no_buy'] = datetime.now() > datetime.now().replace(hour = 20, minute = 00)
-				flip, reason = algo.check_signals(stock, index, algo_params)
-		else:
-			flip, reason = algo.check_signals(stock, index, algo_params)	
-
+		flip, reason = algo.check_signals(stock, index, algo_params, True)
+	
 		if(flip != 0):
 			money, last_total = common.do_transaction(stock,
 								  flip,
@@ -96,35 +82,6 @@ while(not is_last):
 								  index,
 								  options)
 
-	# cross check for Nordnet bull/bear
-	if(len(stocks) == 2):
-		for stock in stocks:
-			if(stock['type'] == 'long'):
-				cc_long = stock
-			elif(stock['type'] == 'short'):
-				cc_short = stock
-
-		if(cc_short['active_position'] and cc_long['flip'] == 1):
-				money, last_total = common.do_transaction(cc_short,
-									-1,
-									"cross",
-									money,
-									last_total,
-									closed_deals,
-									algo_params,
-									index,
-									options)
-
-		if(cc_long['active_position'] and cc_short['flip'] == 1):
-				money, last_total = common.do_transaction(cc_long,
-									-1,
-									"cross",
-									money,
-									last_total,
-									closed_deals,
-									algo_params,
-									index,
-									options)
 
 	# graph
 	if(options['do_graph'] and (index % sett['graph_update_interval'] == 0)):

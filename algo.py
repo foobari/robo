@@ -8,6 +8,7 @@ import common
 import time
 
 #from hurst import compute_Hc
+#global_test = -0.005
 
 PIVOT_WIN = 600
 algos = []
@@ -20,6 +21,8 @@ optimizer_runs    =  0
 optimizer_param   =  0
 optimizer_bigruns =  0
 optimizer_params = []
+
+progress_idx = 0
 
 trailing_tweak = 0
 p = {}
@@ -40,20 +43,22 @@ param_names = [ 'name',		#0
 # optimizer window/step
 optimizer_window_percentage_min =   1
 optimizer_window_percentage_max =  10
-optimizer_window_steps_min      =   5 
-optimizer_window_steps_max      =  25
+optimizer_window_steps_min      =   5
+optimizer_window_steps_max      =  50
 
 # parameter list to optimize
-#params_idx = [1, 2, 6, 7, 8, 9]
+#params_idx = [1, 2, 3, 4, 5, 9, 10, 11]
 params_idx = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
 #params_idx = [4]
-#params_idx = [4,5]
+#params_idx = [1,2,5,6,7,8,9]
 
 def get_algo_params():
+	#         	 1	    2	      3        4         5        6          7          8          9         10         11
 	#          cci_lim   cci_down    target  ftarget  trailing    cci_w    sma_len    rsi_len    rsi_lim    cci_big    rsi_big
 	algo_params = (
-	('doge',  -157.392,  -132.262,    2.550,   0.072,   -6.427,      68,       142,       127,    50.996,  -217.139,    39.779), # doge active
-	('btc',   -162.755,  -132.394,    2.530,   0.095,   -5.024,      68,       121,       178,    51.098,  -240.422,    39.269), 
+	('doge',  -169.133,  -132.248,    2.538,   0.062,   -6.124,      68,       140,       127,    51.111,  -217.091,    39.776), # doge 96.1/178.9
+	('btc',   -163.702,  -126.863,    2.164,   0.007,   -5.746,      44,       122,       167,    51.727,  -234.257,    42.197), # btctest
+	('eth',   -157.445,  -133.088,    2.563,   0.069,   -6.787,      68,       142,       127,    50.991,  -217.087,    39.693), # eth test
 	)
 	return algo_params
 
@@ -98,17 +103,41 @@ def randomize_params():
 	global optimizer_params
 	global p
 
-	p['cci_lim'] 	=  random.uniform(-130,  -230)
-	p['cci_down'] 	= -random.uniform(70,  170)
-	p['target']	=  random.uniform(1, 3)
-	p['ftarget'] 	= -random.uniform(1, 3)
-	p['trailing'] 	= -random.uniform(1, 3)
-	p['cci_window']	=  int(random.uniform(50, 100))
-	p['sma_len']	=  int(random.uniform(100, 200))
-	p['rsi_len']	=  int(random.uniform(250, 350))
-	p['rsi_lim']	=  random.uniform(20, 50)
-	p['cci_big'] 	=  random.uniform(100, 200)
-	p['rsi_big'] 	=  random.uniform(30, 50)
+	diff = 50
+	p['cci_lim'] 	=  random.uniform(p['cci_lim'] - diff,  p['cci_lim'] + diff)
+	p['cci_down'] 	=  random.uniform(p['cci_lim'], p['cci_down'] + diff)
+	
+	diff = 2
+	low = p['target'] - diff
+	if(low < 0):
+		low = 0
+	p['target']	=  random.uniform(low, p['target'] + diff)
+	
+	diff = 0.1
+	low = p['ftarget'] - diff
+	if(low < 0):
+		low = 0
+	p['ftarget'] 	=  random.uniform(low, p['ftarget'] + diff)
+	
+	diff = 3
+	high = p['trailing'] + diff
+	if(high > 0):
+		high = 0
+	p['trailing'] 	=  random.uniform(p['trailing'] - diff, high)
+	
+	diff = 50
+	p['cci_window']	=  int(random.uniform(40, p['cci_window'] + diff))
+	p['sma_len']	=  int(random.uniform(100, p['sma_len'] + diff))
+	p['rsi_len']	=  int(random.uniform(100, p['rsi_len'] + diff))
+	
+	diff = 3
+	p['rsi_lim']	=  random.uniform(p['rsi_lim'] - diff, p['rsi_lim'] + diff)
+	
+	diff = 50
+	p['cci_big'] 	=  random.uniform(p['cci_big'] - diff, p['cci_big'] + diff)
+	
+	diff = 3
+	p['rsi_big'] 	=  random.uniform(p['rsi_big'] - diff, p['rsi_big'] + diff)
 
 	print("Randomized", p)
 
@@ -133,6 +162,12 @@ def optimize_params(randomize_params_start_values = False):
 	global p
 	global start_time
 
+	# for manual optimizing
+	#global global_test
+	#global_test += 0.0005
+	#print("SMA_SPEED_CUTOFF_PERCENT", 0.05 + global_test)
+	#return p
+
 	optimizer_result_best_algo_params = common.get_current_best_optimizer_vars()
 
 	if(optimizer_runs == 0):
@@ -143,7 +178,7 @@ def optimize_params(randomize_params_start_values = False):
 		params_idx = random.sample(params_idx, len(params_idx))
 		print("Randomized order", params_idx)
 
-		optimizer_window =  int(random.uniform(optimizer_window_percentage_min,  optimizer_window_percentage_max))
+		optimizer_window =  float(random.uniform(optimizer_window_percentage_min,  optimizer_window_percentage_max))
 		optimizer_steps  =  int(random.uniform(optimizer_window_steps_min,       optimizer_window_steps_max))
 		#optimizer_window  = 50
 		#optimizer_steps   = 5
@@ -259,13 +294,14 @@ def init():
 	algos = [algo_cci_trigger,
 		 algo_trailing_stoploss,
 		 algo_reach_target,
+		 algo_hard_stoploss,
 		]
 	
 	return techs, algos
 
 def print_decision_vars(stock):
 	if(True):
-		len = 5
+		len = 20
 		print("current_top", stock['current_top'])
 		print("sell_series", stock['sell_series'][-len:])
 		print("sma_series_short", stock['sma_series_short'][-len:])
@@ -273,88 +309,218 @@ def print_decision_vars(stock):
 		print("cci_series", stock['cci_series'][-len:])
 		print("rsi_series", stock['rsi_series'][-len:])
 
+def print_decision_bars(index, stock, algo_params, trigger1, trigger2, flip):
+	global progress_idx
+	progress = ['|', '/', '-', '\\', '|', '/', '-', '\\']
+	
+	trig1_str = ":cci ["
+	idx = 0
+	for tr in trigger1:
+		if(tr == 1):
+			trig1_str += str(idx)
+		else:
+			trig1_str += "-"
+		idx += 1
+	trig1_str += "]"
 
-def algo_cci_trigger(stock, index, algo_params):
+	trig2_str = "cci_rsi ["
+	idx = 0
+	for tr in trigger2:
+		if(tr == 1):
+			trig2_str += str(idx)
+		else:
+			trig2_str += "-"
+		idx += 1
+	trig2_str += "]"
+
+	xval = 0
+	if(stock['cci_series'][-2] < algo_params['cci_down']):
+		diff = int(algo_params['cci_down'] - stock['cci_series'][-2])
+		if(diff > 50):
+			diff = 50
+			xval = 1
+		else:
+			xval = 50 - diff
+	xstr1 = '[' + (xval)*'#' + (50-xval)*'-' + ']'
+
+	xval = 0
+	if(stock['cci_series'][-2] < algo_params['cci_big']):
+		diff = int(algo_params['cci_big'] - stock['cci_series'][-2])
+		if(diff > 50):
+			diff = 50
+			xval = 1
+		else:
+			xval = 50 - diff
+	xstr2 = '[' + (xval)*'#' + (50-xval)*'-' + ']'
+
+
+	print(progress[progress_idx], index, xstr1, xstr2, trig1_str, trig2_str, end = '\r')
+	progress_idx += 1
+	if(progress_idx == 8):
+		progress_idx = 0
+	
+	if(flip):
+		print()
+
+
+def algo_cci_trigger(stock, index, algo_params, live):
 	flip = 0
 	reason = ""
-
 	SMA_LONG = algo_params['sma_len']
 	buy  = float(stock['buy_series'][-1])
 	sell = float(stock['sell_series'][-1])
 
-	if(index > SMA_LONG):
-		
-		if(not stock['active_position'] and not stock['no_buy']):
-			if((stock['cci_series'][-2] < algo_params['cci_down']) and (stock['cci_series'][-1] >= algo_params['cci_down'])):
-				if(stock['rsi_series'][-1] > algo_params['rsi_lim']):
-					if(buy > stock['sma_series_long'][-1]):
-						if(stock['cci_series'][-2] > algo_params['cci_lim']):
-							reason = "cci"
-							flip = 1
+	trigger1 = [0,0,0,0,0]
+	trigger2 = [0,0,0]
 
+	if(index >= SMA_LONG):
 		
-		if(stock['cci_series'][-2] < algo_params['cci_big'] and stock['cci_series'][-1] > algo_params['cci_big'] and
-			stock['rsi_series'][-1] < algo_params['rsi_big']):
-				if(np.min(stock['rsi_series'][-50:]) < 1):
-					print("fail rsi fix")
-				else:
-					#print_decision_vars(stock)
-					reason = "cci_rsi"
+		#### CCI ####
+		if(not stock['active_position'] and not stock['no_buy']):
+			trigger1[0] = 1
+
+		if(stock['cci_series'][-2] < algo_params['cci_down'] and stock['cci_series'][-1] >= algo_params['cci_down']):
+			trigger1[1] = 1
+
+		if(stock['rsi_series'][-1] > algo_params['rsi_lim']):
+			trigger1[2] = 1
+		
+		if(buy > stock['sma_series_long'][-1]):
+			trigger1[3] = 1
+		
+		if(stock['cci_series'][-2] > algo_params['cci_lim']):
+			trigger1[4] = 1
+
+		if(np.sum(trigger1) == 5):
+			'''
+			X = np.array([0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19])
+			z = np.polyfit(X, stock['buy_series'][-20:], 1)
+			buy_diff = z[0]
+
+			z = np.polyfit(X, stock['cci_series'][-20:], 1)
+			cci_diff = z[0]
+
+			z = np.polyfit(X, stock['rsi_series'][-20:], 1)
+			rsi_diff = z[0]
+
+			d = buy_diff / (cci_diff * rsi_diff) * 100
+
+			if(d > -0.0032 and d < 0.0051):
+			'''
+			# doge rsi exclusion filter after statistical analysis
+			if(stock['name'] != 'DOGEUSDT'):
+				reason = "cci_sma"
+				flip = 1
+			else:
+				if(np.mean(stock['rsi_series'][-20:-5]) < 55.0):
+					reason = "cci_sma"
 					flip = 1
+
+		#### CCI_RSI ####
+		if(not stock['active_position'] and not stock['no_buy']):
+			trigger2[0] = 1
+
+		if(stock['cci_series'][-2] < algo_params['cci_big'] and stock['cci_series'][-1] > algo_params['cci_big']):
+			trigger2[1] = 1
+
+		if(stock['rsi_series'][-1] < algo_params['rsi_big']):
+			trigger2[2] = 1
+
+		if(np.sum(trigger2) == 3):
+			if(np.min(stock['rsi_series'][-50:]) < 1):
+				print("fail rsi fix")
+			else:
+				reason = "cci_rsi"
+				flip = 1
+
+		#live = True
+		if(live):
+			if(index == SMA_LONG):
+				print("cci/cci_rsi active")
+
+			if(not stock['active_position']):
+				print_decision_bars(index, stock, algo_params, trigger1, trigger2, flip)
+				
+
 	return flip, reason
 
 
-def algo_trailing_stoploss(stock, index, algo_params):
-	global trailing_tweak
-
+def algo_trailing_stoploss(stock, index, algo_params, live):
 	flip = 0
 	reason = ""
 	buy  = float(stock['buy_series'][-1])
 	sell = float(stock['sell_series'][-1])
 
 	if(stock['active_position']):
-		if(trailing_tweak == 0):
+		if(stock['target_tweak'] == 0):
 			trailing = algo_params['trailing']
 			reason = "trailing_stop_loss"
 		else:
-			trailing = trailing_tweak
+			trailing = stock['target_tweak']
 			reason = "flex_target"
 
 		target_price = ((1 + float(trailing) * stock['leverage'] / 100) * stock['current_top'])
 			
-		if(buy >= stock['current_top']):
+		if(buy > stock['current_top']):
 			stock['current_top'] = buy
 			stock['trailing_stop_loss'] = target_price
-			#print("top", stock['current_top'], ", trailing", stock['trailing_stop_loss'])
+			if(live):
+				print('{:<0s}{:>6.4f}{:<0s}{:>6.4f}'.format("top ", round(stock['current_top'], 4), " -> trailing stop ", round(stock['trailing_stop_loss'], 4)))
 		if(sell <= stock['trailing_stop_loss']):
 			flip = -1
 
 	return flip, reason
 
 
-def algo_reach_target(stock, index, algo_params):
-	global trailing_tweak
+def algo_reach_target(stock, index, algo_params, live):
+	global global_test
 
-	D_FLEX_TRAILING = 0.174
-	SMA_SPEED_CUTOFF_PERCENT = 0.050
+	# optimized manually 28.5.2021
+	D_FLEX_TRAILING = 2.12
+	SMA_SPEED_CUTOFF_PERCENT = 0.049
+	HARD_TRIGGER_TARGET = 0.990
+	HARD_TRIGGER_CUTOFF = 1.004
 
 	flip = 0
 	reason = ""
 	buy  = float(stock['buy_series'][-1])
 
 	if(stock['active_position']):
+		# for doge only
+		#if(stock['name'] == 'DOGEUSDT' and stock['hard_stop_loss'] == 0 and buy >= (HARD_TRIGGER_TARGET * stock['target'])):
+		if(stock['hard_stop_loss'] == 0 and buy >= (HARD_TRIGGER_TARGET * stock['target'])):
+			stock['hard_stop_loss'] = HARD_TRIGGER_CUTOFF * stock['last_buy']
+			if(live):
+				print(">pre-target, hard_stop_loss set", stock['hard_stop_loss'])
+
 		if(buy >= stock['target']):
-			if(stock['test'] == 0):
-				#print_decision_vars(stock)
+			if(stock['target_tweak'] == 0):
 				sma_speed = 100 * (stock['sma_series_short'][-1] / stock['sma_series_short'][-2] - 1)
 				if(sma_speed > SMA_SPEED_CUTOFF_PERCENT):
-					tweak = D_FLEX_TRAILING
+					tweak = algo_params['ftarget'] * D_FLEX_TRAILING
+
 				else:
 					tweak = algo_params['ftarget']
-				trailing_tweak = algo_params['trailing'] * tweak
-				stock['test'] = tweak
-				print(">target, trailing", trailing_tweak)
-				
+
+				stock['target_tweak'] = algo_params['trailing'] * tweak
+
+				if(live):
+					print(">target, new trailing percentage limit set", stock['target_tweak'])
+
+	return flip, reason
+
+def algo_hard_stoploss(stock, index, algo_params, live):
+	flip = 0
+	reason = ""
+	buy  = float(stock['buy_series'][-1])
+
+	if(stock['active_position']):
+		if(stock['hard_stop_loss'] > 0):
+			if(buy <= stock['hard_stop_loss']):
+				stock['hard_stop_loss'] = 0
+				flip = -1
+				reason = "hard_stop_loss"
+
 	return flip, reason
 
 def calc_sma(stock, index, algo_params):
@@ -414,7 +580,7 @@ def calc_cci(stock, index, algo_params):
 		stock['cci_series'].append(0)
 
 
-def check_signals(stock, index, algo_params):
+def check_signals(stock, index, algo_params, live):
 	global algos
 	global trailing_tweak
 
@@ -427,7 +593,7 @@ def check_signals(stock, index, algo_params):
 	
 	# loop through all algos
 	for algo in algos:
-		flip, reason = algo(stock, index, algo_params)
+		flip, reason = algo(stock, index, algo_params, live)
 		stock['flip'] = flip
 		if(flip != 0):
 			trailing_tweak = 0

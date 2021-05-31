@@ -1,10 +1,5 @@
 # -*- coding: iso-8859-15 -*-
 from lxml import html
-#from selenium import webdriver
-#from selenium.webdriver.common.by import By
-#from selenium.webdriver.support.ui import WebDriverWait
-#from selenium.webdriver.support import expected_conditions as EC
-#from selenium.webdriver.support.ui import Select
 import requests
 import numpy as np
 import math
@@ -72,9 +67,7 @@ def init_stocks(options):
 		stock['buy'] = 0
 		stock['sell'] = 0
 		stock['current_top'] = 0
-		stock['dir'] = 0
-		stock['trigger'] = 0
-		stock['guard'] = 0
+		stock['current_bottom'] = 1000000
 		stock['buy_series'] = []
 		stock['sell_series'] = []
 		stock['sma_series_short'] = []
@@ -82,39 +75,17 @@ def init_stocks(options):
 		stock['cci_series'] = []
 		stock['rsi_series'] = []
 		stock['cci_ptyp'] = []
-		stock['hurst'] = []
-		stock['win_high'] = []
-		stock['win_low'] = []		
-		stock['hh'] = []
-		stock['hh_sma'] = []
-		stock['bias'] = []
-		stock['bias_sma'] = []
-		stock['macd_line'] = []
-		stock['macd_signal'] = []
-		stock['macd_histogram'] = []
-		stock['stochastic_d'] = []
-		stock['stochastic_k'] = []
-		stock['test'] = 0
-		stock['test_sma'] = []
-		stock['pivots'] = []
-		stock['bb_upper'] = []
-		stock['bb_lower'] = []
-		stock['bb_spread'] = []
-		stock['bb_spread_dev'] = []
-		stock['tr'] = []
-		stock['kc_typ'] = []
-		stock['kc_upper'] = []
-		stock['kc_lower'] = []
-		stock['squeeze'] = []
-		stock['squeeze_val'] = []
 		stock['signals_list_sell'] = []
 		stock['signals_list_buy'] = []
 		stock['browser'] = 0
 		stock['reason'] = ''
 		stock['flip'] = 0
-		stock['tweak'] = []
+		stock['target'] = 0
+		stock['target_tweak'] = 0
 		stock['no_buy'] = False
+		stock['hard_stop_loss'] = 0
 		stock['trailing_stop_loss'] = 0
+		stock['trailing_entry'] = 0
 
 	return stocks
 
@@ -161,6 +132,7 @@ def calc_stats(closed_deals):
 		stats['magic'] = 10 * stats['profitability'] * stats['sharpe'] * (stats['result_eur'] / stats['days']) * (stats['deals'] /  stats['days'])
 		if(stats['magic'] > 0 and stats['result_eur'] < 0):
 			stats['magic'] *= -1
+		
 	else:
 		stats['sharpe']        = 0
 		stats['profit_factor'] = 0
@@ -312,6 +284,7 @@ def do_transaction(stock, flip, reason, money, last_total, closed_deals, algo_pa
 		stock['last_buy']           = sell
 		stock['target']             = ((1 + algo_params['target'] * stock['leverage'] / 100) * sell)
 		stock['trailing_stop_loss'] = ((1 + algo_params['trailing'] * stock['leverage'] / 100) * sell)
+		stock['hard_stop_loss'] = 0
 
 		stock['signals_list_buy'].append((index, stock['sell_series'][-1]))
 
@@ -337,14 +310,19 @@ def do_transaction(stock, flip, reason, money, last_total, closed_deals, algo_pa
 		this_deal = tuple([stock['transaction_size'], stock['last_buy'], buy])
 		closed_deals.append(this_deal)
 		stock['current_top'] = 0
+		stock['current_bottom'] = 1000000
 		stock['active_position'] = False
 		stock['signals_list_sell'].append((index, stock['buy_series'][-1]))
 		result_eur = stock['stocks']*(buy - stock['last_buy'])
 		result_per = (buy - stock['last_buy']) / stock['last_buy']
+		marker = "down"
+		if(result_eur > 0):
+			marker = "up"
 		if(options['do_actions']):
 			print(datetime.now().strftime("%H:%M:%S"), "ACTION: SELL", stock['name'], stock['transaction_size'], buy, '{:.1%}'.format(result_per),
-			      round(result_eur, 2), reason, "total", round(last_total, 2), stock['test'])
-		stock['test'] = 0
+			      round(result_eur, 2), reason, "total", round(last_total, 2), marker)
+
+		stock['target_tweak'] = 0
 
 		post_to_toilet(datetime.now().strftime("%H:%M:%S"), "SELL", stock['name'], stock['transaction_size'], buy)
 

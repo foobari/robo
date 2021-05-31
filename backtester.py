@@ -107,7 +107,6 @@ while(True):
 		if(s['one_shot']):
 			quit()
 
-
 		fileindex = 0
 		best_total = 0
 		start_time = time.time()
@@ -127,7 +126,7 @@ while(True):
 				flip = -1
 				reason = 'day_close'
 			else:
-				flip, reason = algo.check_signals(stock, index, algo_params)
+				flip, reason = algo.check_signals(stock, index, algo_params, False)
 
 			if(flip != 0):
 				money, last_total = common.do_transaction(stock,
@@ -139,36 +138,6 @@ while(True):
 									algo_params,
 									index,
 									options)
-
-		# cross check
-		if(len(stocks) == 2):
-			for stock in stocks:
-				if(stock['type'] == 'long'):
-					cc_long = stock
-				elif(stock['type'] == 'short'):
-					cc_short = stock
-
-			if(cc_short['active_position'] and cc_long['flip'] == 1):
-					money, last_total = common.do_transaction(cc_short,
-										-1,
-										"cross",
-										money,
-										last_total,
-										closed_deals,
-										algo_params,
-										index,
-										options)
-
-			if(cc_long['active_position'] and cc_short['flip'] == 1):
-					money, last_total = common.do_transaction(cc_long,
-										-1,
-										"cross",
-										money,
-										last_total,
-										closed_deals,
-										algo_params,
-										index,
-										options)
 		
 
 		# graph
