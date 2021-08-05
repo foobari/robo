@@ -47,16 +47,17 @@ optimizer_window_steps_min      =   5
 optimizer_window_steps_max      =  50
 
 # parameter list to optimize
-#params_idx = [1, 2, 3, 4, 5, 9, 10, 11]
-params_idx = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
+#params_idx = [3, 4, 5]
+params_idx = [1,2,6,7,8,9]
+#params_idx = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
 #params_idx = [4]
-#params_idx = [1,2,5,6,7,8,9]
+
 
 def get_algo_params():
 	#         	 1	    2	      3        4         5        6          7          8          9         10         11
 	#          cci_lim   cci_down    target  ftarget  trailing    cci_w    sma_len    rsi_len    rsi_lim    cci_big    rsi_big
 	algo_params = (
-	('doge',  -169.133,  -132.248,    2.538,   0.062,   -6.124,      68,       140,       127,    51.111,  -217.091,    39.776), # doge 96.1/178.9
+	('doge',  -170.876,  -132.248,    2.574,   0.058,   -6.194,      68,       140,       127,    51.103,  -217.091,    39.775), # doge 105.4/117.5
 	('btc',   -163.702,  -126.863,    2.164,   0.007,   -5.746,      44,       122,       167,    51.727,  -234.257,    42.197), # btctest
 	('eth',   -157.445,  -133.088,    2.563,   0.069,   -6.787,      68,       142,       127,    50.991,  -217.087,    39.693), # eth test
 	)
@@ -392,21 +393,6 @@ def algo_cci_trigger(stock, index, algo_params, live):
 			trigger1[4] = 1
 
 		if(np.sum(trigger1) == 5):
-			'''
-			X = np.array([0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19])
-			z = np.polyfit(X, stock['buy_series'][-20:], 1)
-			buy_diff = z[0]
-
-			z = np.polyfit(X, stock['cci_series'][-20:], 1)
-			cci_diff = z[0]
-
-			z = np.polyfit(X, stock['rsi_series'][-20:], 1)
-			rsi_diff = z[0]
-
-			d = buy_diff / (cci_diff * rsi_diff) * 100
-
-			if(d > -0.0032 and d < 0.0051):
-			'''
 			# doge rsi exclusion filter after statistical analysis
 			if(stock['name'] != 'DOGEUSDT'):
 				reason = "cci_sma"
